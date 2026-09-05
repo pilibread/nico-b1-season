@@ -33,11 +33,16 @@ the file structure and data model in detail — read it before editing.
 Tabbed app: Player Card, Season Plan, Match Log (results), Training (editable weekly
 habits), Homework, Vocabulary (bank + flashcards + quiz), Post-Match (reflections),
 Playbook (strategy checklists), Practice (curated + custom links, plus data backup).
-State is saved in the browser via `localStorage` under key `nico_b1_v2`.
+State is saved in the browser via `localStorage` under key `nico_b1_v2`, and, once
+`FIREBASE_CONFIG` is filled in, mirrored to the Firestore document `students/nico`
+(live, both directions; cloud wins on conflict). `?teacher` on the URL gives the
+read-only teacher view (Homework stays editable). See README, "Cloud sync".
 
 ## Roadmap / next steps (in priority order)
 
-1. **Cloud sync with Firebase + teacher view** — the main next task.
+1. **Cloud sync with Firebase + teacher view** — BUILT (2026-09-05), waiting only for
+   the owner to create the Firebase project and paste the config block into
+   `FIREBASE_CONFIG` (plus the Firestore rules in the README). Original plan kept below.
    - Why: `localStorage` keeps data on one device only. The teacher needs to see the
      student's progress from her own devices.
    - Plan: wire the same HTML file to Firebase (Firestore or Realtime Database).
@@ -62,6 +67,15 @@ State is saved in the browser via `localStorage` under key `nico_b1_v2`.
 
 4. **Mobile refinements** — the layout is already responsive; the habit grid scrolls
    horizontally on narrow screens, which is acceptable but could be made friendlier.
+
+## Working notes
+
+- The file now carries its own `<meta charset>` and viewport tags; the Claude artifact
+  wrapper used to supply them, a plain host does not.
+- To preview locally, serve the folder (`.claude/launch.json` runs Python's http.server
+  on port 8765) and open `nico-b1-season.html`; a `file://` open works too but the
+  in-app browser can't inspect it.
+- `.gitignore` is not needed: there is no build output.
 
 ## Data model (summary — see README for detail)
 

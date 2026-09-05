@@ -8,7 +8,8 @@ Everything is one self-contained file: **`nico-b1-season.html`**. No build step,
 
 - **To use:** double-click the file, or open it in a browser.
 - **To edit:** open it in a code editor, change the file, refresh the browser.
-- The student's data (scores, words, habits, homework) is saved by the browser itself (`localStorage`) under the key `nico_b1_v2`. It stays on that one computer/browser. The **Practice** tab has a "Copy my data / Paste to restore" backup for moving to another device.
+- The student's data (scores, words, habits, homework) is saved by the browser itself (`localStorage`) under the key `nico_b1_v2`. Without cloud sync it stays on that one computer/browser. The **Practice** tab has a "Copy my data / Paste to restore" backup for moving to another device.
+- With cloud sync turned on (see below) the same data is also kept in Firebase, so every device shows the same thing and the teacher can follow along live.
 
 ## File structure
 
@@ -47,6 +48,41 @@ Each tab has a matching `render…()` function that redraws it from `S`. After c
 ## Ratings (player card)
 
 A skill's rating = its latest logged score ÷ max × 99. The overall (OVR) is the average of the skills that have a score. Card tier is set by OVR in `tier()`: 75+ elite, 65+ gold, 50+ silver, below that bronze. Speaking shows "–" until a Speaking score is logged.
+
+## Cloud sync (Firebase) and the teacher view
+
+The app can keep its data in one Firestore document, `students/nico`, in a Firebase project that belongs to the owner. It is off until a config block is pasted in.
+
+**Turning it on**
+
+1. In the [Firebase console](https://console.firebase.google.com) create a project (Google Analytics can be off), then **Build → Firestore Database → Create database** in production mode.
+2. In Firestore's **Rules** tab, replace the rules with the block below and publish. It allows the page to read and write that one document and nothing else, and only with the app's own field names.
+3. **Project settings → Your apps → Web (`</>`)**, register the app, and copy the `firebaseConfig` block.
+4. In `nico-b1-season.html`, replace `const FIREBASE_CONFIG=null;` with `const FIREBASE_CONFIG={ …the block… };`. The client config is not a secret; it is fine to commit.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /students/nico {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(
+        ['examDate','results','habits','habitDefs','homework','vocab','reflections','resources','settings']);
+    }
+  }
+}
+```
+
+**How it behaves**
+
+- The pill in the header says what is happening: *Saved on this device* (sync off), *Connecting…*, *Saving…*, *Synced*, *Offline — will sync*, or *Not syncing* (hover it for the reason).
+- Every change is saved in the browser first, then sent to the cloud a moment later. Changes from another device arrive live and redraw the page.
+- Whenever the browser copy and the cloud copy differ, **the cloud copy wins**. If the cloud is empty, the browser's data is sent up (this is how existing data migrates on first run).
+- Moving data from the Claude-artifact version: use *Copy my data* there and *Paste to restore* in the hosted version. Restore now applies without reloading, so the paste reaches the cloud.
+- The page must be hosted outside the Claude artifact (GitHub Pages, Netlify): that sandbox blocks the connection to Firebase. The same file still works inside the artifact; it just stays local and the pill says *Not syncing*.
+- No login. Anyone who has the page's address can read and change the data, which is why it holds only a first name and study data. Firestore's free plan is more than enough for one student.
+
+**Teacher view**: open the same page with `?teacher` on the end of the address (for example `…/nico-b1-season.html?teacher`). It shows Nico's live data with a gold bar across the top. Every edit control is hidden except the Homework tab, so the teacher can set and tick homework from her own device. This is a convenience, not a lock: the address without `?teacher` is the full app.
 
 ## Publishing / updating the live version
 

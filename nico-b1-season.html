@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nico's B1 Season</title>
 <meta name="description" content="Nico's B1 Preliminary training hub, styled like a football player card: ratings, season plan, match log, training, vocabulary and practice.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -278,6 +280,15 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .backup .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
 .backup textarea{margin-top:12px; font-size:.78rem; font-family:ui-monospace,monospace}
 
+.sync{font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--muted); padding:6px 11px; border-radius:999px; border:1px solid var(--line-strong); display:inline-flex; align-items:center; gap:7px; white-space:nowrap}
+.sync::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--faint); flex:none}
+.sync.synced::before{background:var(--good)}
+.sync.saving::before{background:var(--warn)}
+.sync.error::before,.sync.offline::before{background:var(--below)}
+.teacher-bar{background:linear-gradient(90deg,var(--gold),var(--gold-deep)); color:var(--bg); font-weight:600; font-size:.9rem; text-align:center; padding:8px 20px}
+.teacher .log-form,.teacher #addResult,.teacher .addbar,.teacher .vocab-add,.teacher .practice-bar,.teacher .refl-form,.teacher #addRefl,.teacher .add-res,.teacher .backup,.teacher .del:not([data-hwdel]){display:none!important}
+.teacher .hcell,.teacher .chip,.teacher .hedit{pointer-events:none}
+
 @media (max-width:860px){
   .grid2{grid-template-columns:1fr}
   .phases{grid-template-columns:1fr}
@@ -293,6 +304,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 <header class="top"><div class="wrap tb">
   <div class="logo"><span class="b1">B1</span> NICO'S SEASON</div>
   <div class="tb-right">
+    <span class="sync" id="syncPill">Saved on this device</span>
     <button class="mini-btn" id="bigToggle">A+ Bigger text</button>
     <div class="count">
       <div class="n" id="daysLeft">—</div>
@@ -301,6 +313,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
     </div>
   </div>
 </div></header>
+<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except Homework.</div>
 
 <nav class="tabs"><div class="wrap" id="tabbar">
   <button class="tab active" data-tab="overview">Player Card</button>
@@ -484,7 +497,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
     <div id="resArea"></div>
     <div class="backup">
       <h3>Back up your progress</h3>
-      <p>Your log, words, habits and homework are saved in this browser only. To keep a copy or move to another device, copy your data, save it somewhere safe, and paste it back when you need it.</p>
+      <p id="backupText">Your log, words, habits and homework are saved in this browser only. To keep a copy or move to another device, copy your data, save it somewhere safe, and paste it back when you need it.</p>
       <div class="row">
         <button class="btn ghost sm" id="copyData">Copy my data</button>
         <button class="btn ghost sm" id="showRestore">Paste to restore</button>
@@ -495,9 +508,20 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
   </section>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore-compat.js"></script>
 <script>
 "use strict";
 const KEY="nico_b1_v2";
+
+/* ----- cloud sync (optional) -----
+   To turn on sync across devices, paste the config block from the Firebase console
+   in place of null below (see README, "Cloud sync"). Left as null, the app works
+   exactly as before: saved in this browser only. */
+const FIREBASE_CONFIG=null;
+const STUDENT_ID="nico";
+/* Open the page with ?teacher on the end of the address for the teacher view. */
+const TEACHER=/[?#&]teacher\b/.test(location.search+location.hash);
 const DEFAULT_EXAM="2027-06-05";
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const SKILLS={
@@ -535,9 +559,8 @@ const DEFAULT_HABITS=[
 ];
 
 let S=load();
-function load(){
-  let d=null; try{d=JSON.parse(localStorage.getItem(KEY));}catch(e){}
-  if(!d) d={};
+function normalize(d){
+  if(!d||typeof d!=="object") d={};
   d.examDate=d.examDate||DEFAULT_EXAM;
   d.results=d.results||[{id:"mock",date:"2026-06-26",name:"June mock",listening:9,reading:5,writing:23,speak:"",note:"Starting point",mock:true}];
   d.habits=d.habits||{};
@@ -549,7 +572,60 @@ function load(){
   d.settings=d.settings||{};
   return d;
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function load(){
+  let d=null; try{d=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  return normalize(d);
+}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function save(){saveLocal();cloudPush();}
+
+/* ----- cloud sync -----
+   One Firestore document, students/<STUDENT_ID>, holds the whole of S.
+   Every save() pushes it (debounced); every change in the cloud comes back
+   through onSnapshot and is rendered. The cloud copy wins when the two differ. */
+let cloudRef=null,cloudReady=false,cloudDirty=false,pushTimer=null;
+const stable=o=>JSON.stringify(o,(k,v)=>v&&typeof v==="object"&&!Array.isArray(v)?Object.keys(v).sort().reduce((a,x)=>(a[x]=v[x],a),{}):v);
+const SYNC_TEXT={local:"Saved on this device",connecting:"Connecting…",saving:"Saving…",synced:"Synced",offline:"Offline — will sync",error:"Not syncing"};
+function setSync(state,detail){const p=document.getElementById("syncPill");p.className="sync "+state;p.textContent=SYNC_TEXT[state];p.title=detail||"";}
+function cloudPush(){
+  if(!cloudRef)return;
+  cloudDirty=true;
+  if(!cloudReady)return;
+  clearTimeout(pushTimer);setSync("saving");
+  pushTimer=setTimeout(cloudFlush,400);
+}
+function cloudFlush(){
+  if(!cloudRef||!cloudReady||!cloudDirty)return;
+  cloudDirty=false;
+  cloudRef.set(JSON.parse(JSON.stringify(S)))
+    .then(()=>{if(!cloudDirty)setSync(navigator.onLine?"synced":"offline");})
+    .catch(e=>{cloudDirty=true;setSync("error",e.message);});
+}
+function cloudInit(){
+  if(!FIREBASE_CONFIG){setSync("local");return;}
+  if(typeof firebase==="undefined"){setSync("error","The Firebase script could not load here. Data is still saved in this browser.");return;}
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    cloudRef=firebase.firestore().collection("students").doc(STUDENT_ID);
+  }catch(e){cloudRef=null;setSync("error",e.message);return;}
+  setSync("connecting");
+  const firstAnswer=setTimeout(()=>{if(!cloudReady)setSync("offline","Can't reach the cloud yet. Everything is still saved on this device and will sync when it connects.");},8000);
+  document.getElementById("backupText").textContent="Your progress syncs automatically, so it is the same on every device. Copy and paste are still here if you want a spare copy.";
+  cloudRef.onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites)return;          // our own write echoing back
+    if(snap.metadata.fromCache&&!snap.exists)return;   // offline and nothing cached: not an answer yet
+    clearTimeout(firstAnswer);
+    const first=!cloudReady; cloudReady=true;
+    if(!snap.exists){cloudDirty=true;cloudFlush();return;}   // nothing in the cloud yet: send what this device has
+    if(first)cloudDirty=false;                          // cloud wins over anything typed before it answered
+    const d=snap.data();
+    if(stable(d)!==stable(S)){S=normalize(d);saveLocal();renderAll();}
+    if(!cloudDirty)setSync("synced");
+  },err=>{cloudReady=false;setSync("error",err.message);});
+  window.addEventListener("pagehide",()=>{clearTimeout(pushTimer);cloudFlush();});
+  window.addEventListener("offline",()=>setSync("offline"));
+  window.addEventListener("online",()=>{if(cloudDirty)cloudFlush();else setSync("synced");});
+}
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -800,10 +876,13 @@ function applyBig(){document.body.classList.toggle("big",!!S.settings.big);}
 document.getElementById("bigToggle").onclick=()=>{S.settings.big=!S.settings.big;save();applyBig();};
 document.getElementById("copyData").onclick=async()=>{const txt=JSON.stringify(S),msg=document.getElementById("copyMsg");try{await navigator.clipboard.writeText(txt);msg.textContent="Copied — paste it somewhere safe.";}catch(e){document.getElementById("restoreArea").hidden=false;document.getElementById("restoreBox").value=txt;msg.textContent="Select the text below and copy it.";}setTimeout(()=>msg.textContent="",4000);};
 document.getElementById("showRestore").onclick=()=>{const r=document.getElementById("restoreArea");r.hidden=!r.hidden;};
-document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=Object.assign(load(),d);save();location.reload();}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
+document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
+function renderAll(){applyBig();renderCount();renderCard();renderGoals();renderLog();renderHabits();renderHw();renderVocab();renderRefl();renderRes();}
 document.getElementById("f_date").value=todayISO();
 document.getElementById("r_date").value=todayISO();
-applyBig();renderCount();renderCard();renderGoals();renderLog();renderHabits();renderHw();renderVocab();renderRefl();renderRes();
+if(TEACHER){document.body.classList.add("teacher");document.getElementById("teacherBar").hidden=false;document.title="Nico's B1 Season — teacher view";}
+renderAll();
+cloudInit();
 </script>
