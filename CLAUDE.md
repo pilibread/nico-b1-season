@@ -18,7 +18,8 @@ the file structure and data model in detail — read it before editing.
 
 - Direct, factual writing. No praise or filler.
 - Interface language: English. Typeface is Lexend (chosen for readability).
-- Keep it as ONE HTML file unless we deliberately decide otherwise.
+- Keep the app ONE HTML file. The deliberate exceptions (decided 2026-09-05) are the
+  hosting files beside it: `index.html`, `manifest.webmanifest`, `icon-*.png`, `sw.js`.
 - The student is a minor: store only his first name and study data. No other personal identifiers.
 
 ## Baseline data (do not lose)
@@ -36,7 +37,8 @@ Playbook (editable strategy tips, seeded from `DEFAULT_PLAYBOOK`), Practice (cur
 State is saved in the browser via `localStorage` under key `nico_b1_v2`, and, once
 `FIREBASE_CONFIG` is filled in, mirrored to the Firestore document `students/nico`
 (live, both directions; cloud wins on conflict). `?teacher` on the URL gives the
-read-only teacher view (Homework and Playbook stay editable). See README, "Cloud sync".
+read-only teacher view (Homework and Playbook stay editable); the browser remembers it
+in `localStorage` key `nico_teacher`, and `?student` clears it. See README, "Cloud sync".
 
 ## Roadmap / next steps (in priority order)
 
@@ -60,15 +62,16 @@ read-only teacher view (Homework and Playbook stay editable). See README, "Cloud
    Pages from `main` root. Live at https://pilibread.github.io/nico-b1-season/ ;
    teacher view adds `?teacher`. Publishing = commit + `git push`.
 
-3. **Phone "app" polish (PWA)** — once self-hosted (so we control the page `<head>`):
+3. **Phone "app" polish (PWA)** — DONE (2026-09-05): manifest, icons (gold B1 badge,
+   drawn from the logo), iOS meta tags, network-first service worker. Original plan:
    add a web app manifest, `apple-touch-icon`, `theme-color`, and
    `apple-mobile-web-app-capable` so "Add to Home Screen" gives a custom icon, opens
    full-screen, and (optional) works offline via a service worker.
    Note: on the current Claude-hosted link, "Add to Home Screen" already works but
    without a custom icon / full-screen — those need self-hosting.
 
-4. **Mobile refinements** — the layout is already responsive; the habit grid scrolls
-   horizontally on narrow screens, which is acceptable but could be made friendlier.
+4. **Mobile refinements** — DONE (2026-09-05): under 640px the habit grid becomes one
+   card per habit with seven day buttons (`.habit-cards`), sharing handlers with the table.
 
 ## Working notes
 

@@ -1,0 +1,15 @@
+{
+  "name": "Nico's B1 Season",
+  "short_name": "Nico B1",
+  "description": "Nico's B1 Preliminary training hub: player card, match log, training, vocabulary and practice.",
+  "start_url": "nico-b1-season.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b110f",
+  "theme_color": "#0b110f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

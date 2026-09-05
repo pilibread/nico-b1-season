@@ -2,7 +2,7 @@
 
 A single-page study dashboard for one student preparing for the Cambridge **B1 Preliminary (PET)** exam. Styled as a football "player card": the four exam skills are rated out of 99, and the card levels up (bronze → silver → gold) as scores improve.
 
-Everything is one self-contained file: **`nico-b1-season.html`**. No build step, no install, no internet needed except the Google Fonts link. Open it in a browser to use it, or in any text editor to change it.
+The app is one self-contained file: **`nico-b1-season.html`**. No build step, no install. Open it in a browser to use it, or in any text editor to change it. Beside it sit a few small files that only matter when it is hosted: `index.html` (forwards to the app), `manifest.webmanifest` and the `icon-*.png` files (the home-screen "app"), and `sw.js` (keeps it opening with no signal).
 
 ## How to run it
 
@@ -86,7 +86,15 @@ service cloud.firestore {
 - The page must be hosted outside the Claude artifact (GitHub Pages, Netlify): that sandbox blocks the connection to Firebase. The same file still works inside the artifact; it just stays local and the pill says *Not syncing*.
 - No login. Anyone who has the page's address can read and change the data, which is why it holds only a first name and study data. Firestore's free plan is more than enough for one student.
 
-**Teacher view**: open the same page with `?teacher` on the end of the address (for example `…/nico-b1-season.html?teacher`). It shows Nico's live data with a gold bar across the top. Every edit control is hidden except the Homework and Playbook tabs, so the teacher can set homework and adjust the tactics from her own device. This is a convenience, not a lock: the address without `?teacher` is the full app.
+**Teacher view**: open the same page with `?teacher` on the end of the address (for example `…/nico-b1-season.html?teacher`). It shows Nico's live data with a gold bar across the top. Every edit control is hidden except the Homework and Playbook tabs, so the teacher can set homework and adjust the tactics from her own device. That browser then remembers the teacher view, so a home-screen shortcut keeps it; open the page with `?student` to go back to the normal view. This is a convenience, not a lock: anyone can add `?student`.
+
+## On a phone
+
+Open the live link in the phone's browser and add it to the home screen: on iPhone, Safari's share button → **Add to Home Screen**; on Android, Chrome's menu → **Add to Home screen** (or **Install app**). It gets the gold **B1** icon, opens full-screen without browser bars, and still opens with no signal, showing what was saved on the device and syncing when the connection returns.
+
+How that works: `manifest.webmanifest` describes the "app" (name, icon, colours), the `<meta>` tags at the top of the HTML do the same for iPhone, and `sw.js` is a service worker that keeps a copy of the page. It fetches from the network first, so a new version shows on the next online open; the copy is only used when the network fails. Firebase and the fonts are never intercepted. If the list of files in `sw.js` changes, bump the `CACHE` name.
+
+The habit grid switches to one card per habit on screens narrower than 640px, with seven day buttons; on wider screens it is the week table.
 
 ## Publishing / updating the live version
 
