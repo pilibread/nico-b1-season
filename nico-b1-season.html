@@ -515,10 +515,17 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 const KEY="nico_b1_v2";
 
 /* ----- cloud sync (optional) -----
-   To turn on sync across devices, paste the config block from the Firebase console
-   in place of null below (see README, "Cloud sync"). Left as null, the app works
-   exactly as before: saved in this browser only. */
-const FIREBASE_CONFIG=null;
+   The config block from the Firebase console (see README, "Cloud sync"). These
+   keys identify the project; they are not secrets. Set it to null to turn sync
+   off, and the app works as before: saved in this browser only. */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyDjipm9eRP53hLkqTqg2IFSQ5LysV9jM7E",
+  authDomain:"nico-s-english-training-plan.firebaseapp.com",
+  projectId:"nico-s-english-training-plan",
+  storageBucket:"nico-s-english-training-plan.firebasestorage.app",
+  messagingSenderId:"1088575354041",
+  appId:"1:1088575354041:web:982b7852c86d6d3dfe1768"
+};
 const STUDENT_ID="nico";
 /* Open the page with ?teacher on the end of the address for the teacher view. */
 const TEACHER=/[?#&]teacher\b/.test(location.search+location.hash);
