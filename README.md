@@ -25,6 +25,7 @@ Near the top of the `<script>` are plain config objects — these are the safe t
 
 - **`SKILLS`** — the exam papers, their max marks, the June-mock baseline, and the pass / flying-colours targets. Change a target here and the goal bars and player-card ratings follow.
 - **`DEFAULT_HABITS`** — the starting weekly habits (the student can also edit habits live in the Training tab).
+- **`DEFAULT_PLAYBOOK`** — the starting Playbook tips. Only used the first time; after that the Playbook is edited in the app and lives in the data.
 - **`CURATED`** — the practice links shown in the Practice tab (`skill` decides which group each one falls under).
 - **`GROUPS`** — the practice-tab categories and their colours.
 - **`DEFAULT_EXAM`** — fallback exam date (the date is also editable in the header).
@@ -42,6 +43,9 @@ All state lives in one object, `S`, loaded from `localStorage` on start and re-s
 - `reflections[]` — the "what went wrong" entries
 - `resources[]` — links the user added
 - `settings{}` — e.g. bigger-text toggle
+- `playbook[]` — the Playbook sections, each with a title, a small note and its tips (seeded from `DEFAULT_PLAYBOOK`; editable in the app)
+
+Adding a new top-level key to `S` also means adding it to the Firestore rules (see "Cloud sync"), or the cloud will refuse the write and the pill will say *Not syncing*.
 
 Each tab has a matching `render…()` function that redraws it from `S`. After changing data, the pattern is: mutate `S`, call `save()`, call the relevant `render…()`.
 
@@ -67,7 +71,7 @@ service cloud.firestore {
     match /students/nico {
       allow read: if true;
       allow write: if request.resource.data.keys().hasOnly(
-        ['examDate','results','habits','habitDefs','homework','vocab','reflections','resources','settings']);
+        ['examDate','results','habits','habitDefs','homework','vocab','reflections','resources','settings','playbook']);
     }
   }
 }
@@ -82,7 +86,7 @@ service cloud.firestore {
 - The page must be hosted outside the Claude artifact (GitHub Pages, Netlify): that sandbox blocks the connection to Firebase. The same file still works inside the artifact; it just stays local and the pill says *Not syncing*.
 - No login. Anyone who has the page's address can read and change the data, which is why it holds only a first name and study data. Firestore's free plan is more than enough for one student.
 
-**Teacher view**: open the same page with `?teacher` on the end of the address (for example `…/nico-b1-season.html?teacher`). It shows Nico's live data with a gold bar across the top. Every edit control is hidden except the Homework tab, so the teacher can set and tick homework from her own device. This is a convenience, not a lock: the address without `?teacher` is the full app.
+**Teacher view**: open the same page with `?teacher` on the end of the address (for example `…/nico-b1-season.html?teacher`). It shows Nico's live data with a gold bar across the top. Every edit control is hidden except the Homework and Playbook tabs, so the teacher can set homework and adjust the tactics from her own device. This is a convenience, not a lock: the address without `?teacher` is the full app.
 
 ## Publishing / updating the live version
 

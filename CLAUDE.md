@@ -32,11 +32,11 @@ the file structure and data model in detail — read it before editing.
 
 Tabbed app: Player Card, Season Plan, Match Log (results), Training (editable weekly
 habits), Homework, Vocabulary (bank + flashcards + quiz), Post-Match (reflections),
-Playbook (strategy checklists), Practice (curated + custom links, plus data backup).
+Playbook (editable strategy tips, seeded from `DEFAULT_PLAYBOOK`), Practice (curated + custom links, plus data backup).
 State is saved in the browser via `localStorage` under key `nico_b1_v2`, and, once
 `FIREBASE_CONFIG` is filled in, mirrored to the Firestore document `students/nico`
 (live, both directions; cloud wins on conflict). `?teacher` on the URL gives the
-read-only teacher view (Homework stays editable). See README, "Cloud sync".
+read-only teacher view (Homework and Playbook stay editable). See README, "Cloud sync".
 
 ## Roadmap / next steps (in priority order)
 
@@ -83,7 +83,9 @@ read-only teacher view (Homework stays editable). See README, "Cloud sync".
 
 All state is one object `S`, loaded from `localStorage` on start, re-saved via `save()`
 after every change. Keys: `examDate`, `results[]`, `habits{}`, `habitDefs[]`,
-`homework[]`, `vocab[]`, `reflections[]`, `resources[]`, `settings{}`.
+`homework[]`, `vocab[]`, `reflections[]`, `resources[]`, `settings{}`, `playbook[]`.
+A new top-level key must also be added to the Firestore rules' `hasOnly` list (README,
+"Cloud sync"), or every write is refused.
 Each tab has a `render…()` function. Pattern for any change: mutate `S` → `save()` →
 call the relevant `render…()`. When adding Firebase, keep this shape and sync `S`.
 

@@ -261,6 +261,18 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .scard ul{margin:0; padding-left:20px; font-size:.93rem}
 .scard ul li{margin-bottom:7px}
 .scard .paper-tag{font-size:.72rem; color:var(--muted); font-family:var(--body); font-weight:500; letter-spacing:0; text-transform:none}
+.scard ul{list-style:none; padding-left:0}
+.scard ul li{display:flex; gap:8px; align-items:flex-start}
+.scard ul li::before{content:"•"; color:var(--green); flex:none}
+.scard .pbtip{flex:1; cursor:text}
+.scard .pbtip:hover{color:var(--green)}
+.pb-tools{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+.pb-tools input{flex:1; min-width:150px}
+.pb-meta{display:flex; gap:16px; margin-top:10px}
+.linkbtn{background:none; border:none; padding:0; color:var(--muted); font-family:var(--body); font-size:.78rem; cursor:pointer; text-decoration:underline}
+.linkbtn:hover{color:var(--ink)}
+.pb-add{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap}
+.pb-add input{max-width:340px}
 
 /* ---------- resources ---------- */
 .res-group{margin-bottom:22px}
@@ -289,7 +301,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .sync.saving::before{background:var(--warn)}
 .sync.error::before,.sync.offline::before{background:var(--below)}
 .teacher-bar{background:linear-gradient(90deg,var(--gold),var(--gold-deep)); color:var(--bg); font-weight:600; font-size:.9rem; text-align:center; padding:8px 20px}
-.teacher .log-form,.teacher #addResult,.teacher .addbar,.teacher .vocab-add,.teacher .practice-bar,.teacher .refl-form,.teacher #addRefl,.teacher .add-res,.teacher .backup,.teacher .del:not([data-hwdel]){display:none!important}
+.teacher .log-form,.teacher #addResult,.teacher .addbar,.teacher .vocab-add,.teacher .practice-bar,.teacher .refl-form,.teacher #addRefl,.teacher .add-res,.teacher .backup,.teacher .del:not([data-hwdel]):not([data-pbtip]):not([data-pbsec]){display:none!important}
 .teacher .hcell,.teacher .chip,.teacher .hedit{pointer-events:none}
 
 @media (max-width:860px){
@@ -316,7 +328,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
     </div>
   </div>
 </div></header>
-<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except Homework.</div>
+<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except Homework and Playbook.</div>
 
 <nav class="tabs"><div class="wrap" id="tabbar">
   <button class="tab active" data-tab="overview">Player Card</button>
@@ -479,16 +491,11 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
   <section class="panel" data-panel="playbook" hidden>
     <div class="eyebrow">The tactics</div>
     <h2 class="sec-title">Playbook</h2>
-    <p class="sec-desc">Quick reminders for each paper — the moves that make the difference. Open one before you practise that skill.</p>
-    <div class="strat">
-      <details class="scard" open><summary><span>📖 Reading <span class="paper-tag">· 6 parts · 45 min</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
-        <li>Read the instructions and the question <b>first</b>, then the text.</li><li>Skim once for the general idea before hunting for answers.</li><li>Underline <b>only</b> the key information — names, numbers, opinion words.</li><li>If a word is hard, read the whole sentence — the meaning is often around it.</li><li>Parts 5 & 6 test grammar and set phrases: think what word <i>fits</i>, not just what makes sense.</li><li>Never leave a blank — a sensible guess can be right.</li></ul></div></details>
-      <details class="scard"><summary><span>🎧 Listening <span class="paper-tag">· 4 parts · ~30 min</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
-        <li>Use the pause to <b>predict</b>: a number? a place? a time?</li><li>The answer is usually in <b>different words</b> from the question — don't wait for the exact match.</li><li>Watch for signposts: <i>but, however, actually, in the end</i>.</li><li>Miss one? Let it go and catch the next — don't freeze.</li><li>You hear it twice: first for the answer, second to check.</li><li>Spell gap-fill answers carefully — practise the words you keep meeting.</li></ul></div></details>
-      <details class="scard"><summary><span>✍️ Writing <span class="paper-tag">· 2 tasks · 45 min</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
-        <li>Answer <b>every</b> point in the question — marked first.</li><li>Plan for one minute before you write.</li><li>Aim for ~100 words — room to show detailed, natural language.</li><li>Vary language: linkers (<i>although, so that, as well as</i>), tenses, less common words.</li><li>Match the tone to the task (friendly email vs. article).</li><li>Leave two minutes to check spelling, verbs, punctuation.</li></ul></div></details>
-      <details class="scard"><summary><span>🗣️ Speaking <span class="paper-tag">· 4 parts · with a partner</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
-        <li>Give reasons and examples — never just "yes"/"no".</li><li>Word won't come? Describe it: "the thing you use to…". Keep going.</li><li>Photo task: describe what you see and what is happening.</li><li>React to your partner — it's a conversation, not a speech.</li><li>Speak clearly and steadily; a small pause is fine.</li></ul></div></details>
+    <p class="sec-desc">Quick reminders for each paper — the moves that make the difference. Open one before you practise that skill. Click a tip to reword it, use ✕ to remove it, and add new ones as you learn what works.</p>
+    <div class="strat" id="pbArea"></div>
+    <div class="pb-add">
+      <input type="text" id="newSection" placeholder="Add a section… (e.g. 🔤 Vocabulary)">
+      <button class="btn sm" id="addSection">Add section</button>
     </div>
   </section>
 
@@ -564,6 +571,35 @@ const GROUPS=[
   {key:"vocab",title:"Vocabulary",color:"var(--good)"},
   {key:"writing",title:"Writing",color:"var(--gold)"}
 ];
+const DEFAULT_PLAYBOOK=[
+  {id:"pb-reading",title:"📖 Reading",meta:"6 parts · 45 min",tips:[
+    "Read the instructions and the question first, then the text.",
+    "Skim once for the general idea before hunting for answers.",
+    "Underline only the key information — names, numbers, opinion words.",
+    "If a word is hard, read the whole sentence — the meaning is often around it.",
+    "Parts 5 & 6 test grammar and set phrases: think what word fits, not just what makes sense.",
+    "Never leave a blank — a sensible guess can be right."]},
+  {id:"pb-listening",title:"🎧 Listening",meta:"4 parts · ~30 min",tips:[
+    "Use the pause to predict: a number? a place? a time?",
+    "The answer is usually in different words from the question — don't wait for the exact match.",
+    "Watch for signposts: but, however, actually, in the end.",
+    "Miss one? Let it go and catch the next — don't freeze.",
+    "You hear it twice: first for the answer, second to check.",
+    "Spell gap-fill answers carefully — practise the words you keep meeting."]},
+  {id:"pb-writing",title:"✍️ Writing",meta:"2 tasks · 45 min",tips:[
+    "Answer every point in the question — marked first.",
+    "Plan for one minute before you write.",
+    "Aim for ~100 words — room to show detailed, natural language.",
+    "Vary language: linkers (although, so that, as well as), tenses, less common words.",
+    "Match the tone to the task (friendly email vs. article).",
+    "Leave two minutes to check spelling, verbs, punctuation."]},
+  {id:"pb-speaking",title:"🗣️ Speaking",meta:"4 parts · with a partner",tips:[
+    "Give reasons and examples — never just \"yes\"/\"no\".",
+    "Word won't come? Describe it: \"the thing you use to…\". Keep going.",
+    "Photo task: describe what you see and what is happening.",
+    "React to your partner — it's a conversation, not a speech.",
+    "Speak clearly and steadily; a small pause is fine."]}
+].map(sec=>({...sec,tips:sec.tips.map((text,i)=>({id:sec.id+"-"+(i+1),text}))}));
 const DEFAULT_HABITS=[
   {id:"h1",text:"10-min vocabulary review"},
   {id:"h2",text:"One reading OR listening task"},
@@ -583,6 +619,7 @@ function normalize(d){
   d.reflections=d.reflections||[];
   d.resources=d.resources||[];
   d.settings=d.settings||{};
+  d.playbook=d.playbook||DEFAULT_PLAYBOOK.map(sec=>({...sec,tips:sec.tips.map(t=>({...t}))}));
   return d;
 }
 function load(){
@@ -866,6 +903,33 @@ function renderRefl(){
 }
 document.getElementById("addRefl").onclick=()=>{const w=document.getElementById("r_wrong").value.trim();if(!w)return;S.reflections.push({id:uid(),paper:document.getElementById("r_paper").value,date:document.getElementById("r_date").value||todayISO(),wrong:w,fix:document.getElementById("r_fix").value.trim()});save();document.getElementById("r_wrong").value="";document.getElementById("r_fix").value="";renderRefl();};
 
+/* ----- playbook ----- */
+const pbOpen=new Set([S.playbook[0]&&S.playbook[0].id]);
+function renderPlaybook(){
+  const area=document.getElementById("pbArea");area.innerHTML="";
+  if(!S.playbook.length)area.innerHTML='<div class="empty">No sections yet. Add one below.</div>';
+  S.playbook.forEach(sec=>{
+    const d=document.createElement("details");d.className="scard";d.open=pbOpen.has(sec.id);
+    d.innerHTML=`<summary><span>${esc(sec.title)}${sec.meta?' <span class="paper-tag">· '+esc(sec.meta)+'</span>':''}</span><span class="arw">›</span></summary>
+      <div class="sbody">
+        <ul>${sec.tips.map(t=>`<li><span class="pbtip" data-pbedit="${t.id}" title="Click to edit">${esc(t.text)}</span><button class="del" data-pbtip="${t.id}" title="Remove">✕</button></li>`).join("")}${sec.tips.length?'':'<li class="empty" style="padding:4px 0">No tips yet.</li>'}</ul>
+        <div class="pb-tools"><input type="text" placeholder="Add a tip…" data-pbnew="${sec.id}"><button class="btn sm" data-pbaddtip="${sec.id}">Add</button></div>
+        <div class="pb-meta"><button class="linkbtn" data-pbrename="${sec.id}">Rename section</button><button class="linkbtn" data-pbsec="${sec.id}">Remove section</button></div>
+      </div>`;
+    d.addEventListener("toggle",()=>{if(d.open)pbOpen.add(sec.id);else pbOpen.delete(sec.id);});
+    area.appendChild(d);
+  });
+  const findTip=id=>{for(const sec of S.playbook){const t=sec.tips.find(x=>x.id===id);if(t)return {sec,t};}return null;};
+  area.querySelectorAll("[data-pbedit]").forEach(el=>el.onclick=()=>{const f=findTip(el.dataset.pbedit);if(!f)return;const v=prompt("Edit this tip:",f.t.text);if(v!=null&&v.trim()){f.t.text=v.trim();save();renderPlaybook();}});
+  area.querySelectorAll("[data-pbtip]").forEach(b=>b.onclick=()=>{const f=findTip(b.dataset.pbtip);if(!f)return;f.sec.tips=f.sec.tips.filter(x=>x.id!==f.t.id);save();renderPlaybook();});
+  area.querySelectorAll("[data-pbaddtip]").forEach(b=>b.onclick=()=>{const sec=S.playbook.find(x=>x.id===b.dataset.pbaddtip);const i=area.querySelector(`[data-pbnew="${sec.id}"]`);const v=i.value.trim();if(!v)return;sec.tips.push({id:uid(),text:v});save();renderPlaybook();});
+  area.querySelectorAll("[data-pbnew]").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")area.querySelector(`[data-pbaddtip="${i.dataset.pbnew}"]`).click();}));
+  area.querySelectorAll("[data-pbrename]").forEach(b=>b.onclick=()=>{const sec=S.playbook.find(x=>x.id===b.dataset.pbrename);const v=prompt("Section name:",sec.title);if(v==null||!v.trim())return;sec.title=v.trim();const m=prompt("Small note next to the name (optional):",sec.meta||"");if(m!=null)sec.meta=m.trim();save();renderPlaybook();});
+  area.querySelectorAll("[data-pbsec]").forEach(b=>b.onclick=()=>{const sec=S.playbook.find(x=>x.id===b.dataset.pbsec);if(!confirm(`Remove "${sec.title}" and its ${sec.tips.length} tips?`))return;S.playbook=S.playbook.filter(x=>x.id!==sec.id);save();renderPlaybook();});
+}
+document.getElementById("addSection").onclick=()=>{const i=document.getElementById("newSection");const v=i.value.trim();if(!v)return;const sec={id:uid(),title:v,meta:"",tips:[]};S.playbook.push(sec);pbOpen.add(sec.id);i.value="";save();renderPlaybook();};
+document.getElementById("newSection").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addSection").click();});
+
 /* ----- resources ----- */
 function renderRes(){
   const area=document.getElementById("resArea");area.innerHTML="";
@@ -893,7 +957,7 @@ document.getElementById("showRestore").onclick=()=>{const r=document.getElementB
 document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
-function renderAll(){applyBig();renderCount();renderCard();renderGoals();renderLog();renderHabits();renderHw();renderVocab();renderRefl();renderRes();}
+function renderAll(){applyBig();renderCount();renderCard();renderGoals();renderLog();renderHabits();renderHw();renderVocab();renderRefl();renderPlaybook();renderRes();}
 document.getElementById("f_date").value=todayISO();
 document.getElementById("r_date").value=todayISO();
 if(TEACHER){document.body.classList.add("teacher");document.getElementById("teacherBar").hidden=false;document.title="Nico's B1 Season — teacher view";}
