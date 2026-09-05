@@ -56,7 +56,9 @@ read-only teacher view (Homework stays editable). See README, "Cloud sync".
      sandbox blocks external data connections (Firebase calls). Host on GitHub Pages or
      Netlify instead.
 
-2. **Hosting on GitHub Pages** (or Netlify) — needed for step 1, and gives a stable URL.
+2. **Hosting on GitHub Pages** — DONE (2026-09-05). Repo `pilibread/nico-b1-season`,
+   Pages from `main` root. Live at https://pilibread.github.io/nico-b1-season/ ;
+   teacher view adds `?teacher`. Publishing = commit + `git push`.
 
 3. **Phone "app" polish (PWA)** — once self-hosted (so we control the page `<head>`):
    add a web app manifest, `apple-touch-icon`, `theme-color`, and
@@ -87,6 +89,6 @@ call the relevant `render…()`. When adding Firebase, keep this shape and sync 
 
 ## Live version
 
-Currently also published as a Claude artifact (private link the owner can share).
-The artifact is the browser/no-setup version; the Firebase version will be the
-self-hosted one. Keep both working from the same source where practical.
+Primary: GitHub Pages, https://pilibread.github.io/nico-b1-season/ (syncs through Firebase).
+Also still published as a Claude artifact (private link), which runs the same file without
+sync. Keep both working from the same source where practical.

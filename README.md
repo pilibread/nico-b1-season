@@ -86,7 +86,18 @@ service cloud.firestore {
 
 ## Publishing / updating the live version
 
-The shared link is a Claude artifact. To push a new version to the same link, ask Claude to republish this file. The one difference on the live (published) page: file downloads are blocked in that sandbox, which is why backup uses copy-to-clipboard instead of a download button.
+The live page is served by GitHub Pages from this repository (`pilibread/nico-b1-season`, branch `main`):
+
+- Student link: **https://pilibread.github.io/nico-b1-season/**
+- Teacher view: **https://pilibread.github.io/nico-b1-season/?teacher**
+
+`index.html` only forwards to `nico-b1-season.html`, keeping `?teacher`. To publish a change, commit it and push to `main`; GitHub rebuilds the site in about a minute:
+
+```bash
+git add -A && git commit -m "what changed" && git push
+```
+
+The older Claude-artifact link still works from the same file, but without cloud sync (that sandbox blocks the Firebase connection, so the pill there says *Not syncing*). File downloads are also blocked there, which is why backup uses copy-to-clipboard instead of a download button.
 
 ## Notes
 
