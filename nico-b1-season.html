@@ -1,0 +1,809 @@
+<title>Nico's B1 Season</title>
+<meta name="description" content="Nico's B1 Preliminary training hub, styled like a football player card: ratings, season plan, match log, training, vocabulary and practice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Saira+Condensed:wght@500;600;700;800;900&display=swap">
+<style>
+:root{
+  --bg:#0b110f; --bg2:#0e1613; --surface:#141e1a; --surface-2:#1a2621; --surface-3:#20302a;
+  --ink:#f1f6f3; --muted:#9db0a9; --faint:#6f817b;
+  --line:#26332e; --line-strong:#33443d;
+  --gold:#e7c25b; --gold-deep:#c79a33; --green:#25d38a; --green-deep:#12a86a;
+  --good:#3ecf7a; --good-soft:#12321f;
+  --warn:#e6b23e; --warn-soft:#33290f;
+  --below:#e56b48; --below-soft:#361c15;
+  --bronze:#cd8a52; --silver:#c9d1d6;
+  --shadow:0 2px 6px rgba(0,0,0,.35), 0 14px 40px rgba(0,0,0,.4);
+  --radius:14px; --radius-sm:9px;
+  --fs:16.5px; --maxw:1120px;
+  --disp:"Saira Condensed", "Arial Narrow", sans-serif;
+  --body:"Lexend", system-ui, -apple-system, sans-serif;
+}
+body.big{--fs:19px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--body); font-size:var(--fs); line-height:1.6; letter-spacing:.005em;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1200px 500px at 80% -100px, rgba(37,211,138,.08), transparent 60%),
+                   radial-gradient(900px 400px at 0% 0%, rgba(231,194,91,.06), transparent 55%);
+  background-attachment:fixed;
+}
+h1,h2,h3{margin:0; line-height:1.15; text-wrap:balance}
+a{color:var(--green)}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+.disp{font-family:var(--disp)}
+.eyebrow{font-family:var(--disp); font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:.82rem; color:var(--green)}
+
+/* ---------- top bar ---------- */
+header.top{border-bottom:1px solid var(--line); background:linear-gradient(180deg,var(--bg2),transparent)}
+.tb{display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 0; flex-wrap:wrap}
+.logo{font-family:var(--disp); font-weight:900; font-size:1.5rem; letter-spacing:.02em; text-transform:uppercase; display:flex; align-items:center; gap:10px}
+.logo .b1{color:var(--bg); background:linear-gradient(135deg,var(--gold),var(--gold-deep)); padding:2px 10px; border-radius:6px; font-size:1.1rem}
+.tb-right{display:flex; gap:18px; align-items:center; flex-wrap:wrap}
+.count{font-family:var(--disp); text-align:right; line-height:1}
+.count .n{font-size:2rem; font-weight:900; color:var(--gold)}
+.count .lab{font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-family:var(--body); font-weight:600}
+.count .date input{background:var(--surface-2); border:1px solid var(--line-strong); color:var(--ink); border-radius:6px; padding:3px 7px; font-family:var(--body); font-size:.8rem; color-scheme:dark; margin-top:4px}
+.mini-btn{background:var(--surface-2); color:var(--ink); border:1px solid var(--line-strong); border-radius:999px; padding:7px 14px; font-family:var(--body); font-size:.84rem; cursor:pointer}
+.mini-btn:hover{border-color:var(--green)}
+
+/* ---------- tabs ---------- */
+nav.tabs{position:sticky; top:0; z-index:30; background:rgba(11,17,15,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex; gap:2px; overflow-x:auto}
+.tab{
+  background:none; border:none; color:var(--muted); cursor:pointer;
+  font-family:var(--disp); font-weight:700; font-size:1.02rem; letter-spacing:.06em; text-transform:uppercase;
+  padding:15px 16px 13px; white-space:nowrap; border-bottom:3px solid transparent; position:relative;
+}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--gold); border-bottom-color:var(--gold)}
+.tab .badge{display:inline-block; min-width:18px; padding:0 5px; margin-left:5px; font-family:var(--body); font-size:.68rem; font-weight:700; background:var(--green-deep); color:#04170f; border-radius:999px; vertical-align:middle}
+.tab .badge.alert{background:var(--below)}
+
+main{padding:28px 0 70px}
+.panel[hidden]{display:none}
+.sec-title{font-family:var(--disp); font-weight:800; font-size:1.7rem; text-transform:uppercase; letter-spacing:.02em; margin-bottom:2px}
+.sec-desc{color:var(--muted); max-width:66ch; margin:0 0 22px; font-size:.96rem}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+.pad{padding:20px}
+.grid2{display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start}
+
+/* ---------- FUT player card ---------- */
+.fut{
+  position:relative; width:320px; margin:0 auto; padding:26px 24px 22px; border-radius:20px; color:#1a1205;
+  background:linear-gradient(160deg,#f4dd8b 0%, #e7c25b 34%, #cf9f38 70%, #b9862a 100%);
+  box-shadow:0 20px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.45);
+  overflow:hidden;
+}
+.fut::before{content:""; position:absolute; inset:0; background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 48%,transparent 56%); pointer-events:none}
+.fut.tier-silver{background:linear-gradient(160deg,#eef2f4 0%,#c9d1d6 40%,#a7b1b8 75%,#8b969d 100%); color:#1b2226}
+.fut.tier-bronze{background:linear-gradient(160deg,#e7b98c 0%,#cd8a52 42%,#b0703c 78%,#8f5a2d 100%); color:#2a1608}
+.fut.tier-elite{background:linear-gradient(160deg,#123 0%,#0c2a22 45%,#06170f 100%); color:#f6e9b8; box-shadow:0 20px 60px rgba(37,211,138,.28), inset 0 0 0 1.5px rgba(231,194,91,.5)}
+.fut-top{display:flex; justify-content:space-between; align-items:flex-start}
+.fut-ovr{font-family:var(--disp); line-height:.86; text-align:center}
+.fut-ovr .num{font-size:3.5rem; font-weight:900}
+.fut-ovr .pos{font-size:1rem; font-weight:800; letter-spacing:.08em}
+.fut-ovr .tier{display:block; font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.8; margin-top:2px}
+.fut-badge{font-family:var(--disp); font-weight:800; text-align:right; font-size:.9rem; line-height:1.1; opacity:.85}
+.fut-badge .big{font-size:1.5rem; display:block}
+.fut-name{font-family:var(--disp); font-weight:900; font-size:2.4rem; text-transform:uppercase; letter-spacing:.03em; text-align:center; margin:6px 0 14px; border-bottom:2px solid rgba(0,0,0,.22); padding-bottom:10px}
+.fut.tier-elite .fut-name{border-color:rgba(231,194,91,.35)}
+.fut-stats{display:grid; grid-template-columns:1fr 1fr; gap:6px 22px; font-family:var(--disp); font-weight:800}
+.fut-stat{display:flex; align-items:baseline; gap:9px; font-size:1.35rem}
+.fut-stat .v{width:2.1ch; text-align:right}
+.fut-stat .k{font-size:.98rem; letter-spacing:.04em; opacity:.82}
+.fut-stat.na .v,.fut-stat.na .k{opacity:.45}
+.fut-foot{margin-top:12px; font-family:var(--body); font-size:.72rem; font-weight:600; text-align:center; opacity:.75}
+
+.next-obj{margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius); padding:16px}
+.next-obj h3{font-family:var(--disp); text-transform:uppercase; letter-spacing:.05em; font-size:1.05rem; margin-bottom:10px}
+.obj-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:.9rem}
+.obj-row:last-child{border-bottom:none}
+.obj-row .rt{font-family:var(--disp); font-weight:800; font-size:1.15rem}
+
+/* ---------- goals bars ---------- */
+.goal{padding:16px 0; border-bottom:1px solid var(--line)}
+.goal:last-child{border-bottom:none}
+.goal .r1{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; gap:8px; flex-wrap:wrap}
+.goal .nm{font-family:var(--disp); font-weight:800; font-size:1.2rem; text-transform:uppercase; letter-spacing:.03em}
+.goal .now{color:var(--muted); font-size:.88rem}
+.goal .now b{color:var(--ink)}
+.track{position:relative; height:30px; background:var(--surface-3); border-radius:7px; border:1px solid var(--line)}
+.fill{position:absolute; inset:0 auto 0 0; border-radius:6px 0 0 6px; transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.mark{position:absolute; top:-3px; bottom:-3px; width:2px}
+.mark span{position:absolute; top:-17px; left:50%; transform:translateX(-50%); font-size:.64rem; white-space:nowrap; font-weight:700; font-family:var(--disp); letter-spacing:.03em}
+.mockmark{position:absolute; top:0; bottom:0; border-left:2px dashed var(--faint)}
+.mockmark span{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:.62rem; color:var(--faint); white-space:nowrap}
+.note-approx{color:var(--faint); font-size:.82rem; font-style:italic; margin-top:16px}
+
+/* ---------- forms ---------- */
+input[type=text],input[type=number],input[type=date],select,textarea{
+  font-family:inherit; font-size:.95rem; color:var(--ink); background:var(--surface-2);
+  border:1px solid var(--line-strong); border-radius:8px; padding:9px 11px; width:100%; color-scheme:dark;
+}
+textarea{resize:vertical; min-height:52px; line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--green); outline-offset:1px; border-color:var(--green)}
+label.fld{display:flex; flex-direction:column; gap:5px; font-size:.78rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.03em}
+.btn{background:linear-gradient(135deg,var(--green),var(--green-deep)); color:#04170f; border:none; border-radius:8px; padding:10px 18px; font-family:var(--disp); font-weight:800; font-size:1rem; letter-spacing:.04em; text-transform:uppercase; cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-deep)); color:#1a1205}
+.btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line-strong)}
+.btn.ghost:hover{border-color:var(--green)}
+.btn.sm{padding:6px 13px; font-size:.85rem}
+.del{background:none; border:none; color:var(--faint); cursor:pointer; font-size:1rem; line-height:1}
+.del:hover{color:var(--below)}
+.empty{color:var(--faint); font-style:italic; padding:14px 2px; font-size:.9rem}
+.hint{font-size:.82rem; color:var(--muted)}
+
+/* ---------- phases ---------- */
+.phases{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+.phase{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; box-shadow:var(--shadow); position:relative; overflow:hidden}
+.phase::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:linear-gradient(var(--green),var(--green-deep))}
+.phase .ph-n{font-family:var(--disp); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--green); font-size:.82rem}
+.phase h3{font-family:var(--disp); font-size:1.3rem; text-transform:uppercase; margin:5px 0 1px}
+.phase .when{font-size:.84rem; color:var(--muted); margin-bottom:12px}
+.phase ul{margin:0 0 14px; padding-left:18px; font-size:.9rem}
+.phase ul li{margin-bottom:5px}
+.checkpoint{margin-top:auto; background:var(--surface-2); border-radius:var(--radius-sm); padding:11px 13px; font-size:.85rem; border:1px solid var(--line)}
+.checkpoint .cp-lab{font-family:var(--disp); font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:3px; font-size:.9rem}
+.reward{margin-top:8px; background:var(--warn-soft); color:var(--warn); border-radius:var(--radius-sm); padding:9px 13px; font-size:.84rem; font-weight:500}
+
+/* ---------- tables ---------- */
+.log-form{display:grid; grid-template-columns:1.4fr 1fr repeat(4,.8fr); gap:12px; align-items:end}
+.log-form .full{grid-column:1/-1}
+.tbl-wrap{overflow-x:auto; margin-top:18px}
+table{border-collapse:collapse; width:100%; font-size:.92rem}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line)}
+th{font-family:var(--disp); font-size:.82rem; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:700}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+tr.mock td{background:var(--surface-2)}
+.tag{font-size:.68rem; padding:1px 7px; border-radius:999px; background:var(--surface-3); color:var(--muted); font-weight:700; font-family:var(--disp); letter-spacing:.04em}
+
+/* ---------- habits ---------- */
+.habit-top{display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:14px}
+.streaks{display:flex; gap:22px}
+.streak b{font-family:var(--disp); font-size:1.9rem; font-weight:900; color:var(--gold)}
+.streak span{display:block; font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600}
+.habit-grid{overflow-x:auto}
+.hg{border-collapse:collapse; width:100%; min-width:600px}
+.hg th,.hg td{border:1px solid var(--line); padding:0; text-align:center}
+.hg th.hname,.hg td.hname{text-align:left; padding:6px 10px; font-size:.9rem; min-width:210px; background:var(--surface-2)}
+.hg td.hname{cursor:text}
+.hg td.hname .del{margin-left:6px; float:right}
+.hg th{font-family:var(--disp); font-size:.8rem; color:var(--muted); padding:7px 4px; background:var(--surface-2)}
+.hg th.today{color:var(--gold)}
+.hcell{width:46px; height:42px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:var(--disp); font-weight:900}
+.hcell:hover{background:var(--surface-3)}
+.hcell.on{background:linear-gradient(135deg,var(--green),var(--green-deep))}
+.hcell.on::after{content:"✓"; color:#04170f}
+.hcell.future{cursor:default; opacity:.35}
+.hcell.future:hover{background:none}
+.addbar{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
+.addbar input{max-width:340px}
+
+/* ---------- homework ---------- */
+.hw-form{display:grid; grid-template-columns:1.6fr .8fr 1.4fr auto; gap:12px; align-items:end}
+.hw-list{display:flex; flex-direction:column; gap:10px; margin-top:18px}
+.hw{display:flex; align-items:center; gap:14px; background:var(--surface-2); border:1px solid var(--line); border-left:4px solid var(--line-strong); border-radius:var(--radius-sm); padding:12px 14px}
+.hw.done{opacity:.55; border-left-color:var(--good)}
+.hw.due-soon{border-left-color:var(--warn)}
+.hw.overdue{border-left-color:var(--below)}
+.hw .chk{width:24px; height:24px; border-radius:6px; border:2px solid var(--line-strong); cursor:pointer; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-weight:900}
+.hw.done .chk{background:var(--good); border-color:var(--good); color:#04170f}
+.hw .body{flex:1; min-width:0}
+.hw .ti{font-weight:600}
+.hw.done .ti{text-decoration:line-through}
+.hw .meta{font-size:.8rem; color:var(--muted); margin-top:2px}
+.hw .duep{font-family:var(--disp); font-weight:700; font-size:.85rem; padding:3px 9px; border-radius:999px; white-space:nowrap}
+.duep.soon{background:var(--warn-soft); color:var(--warn)}
+.duep.over{background:var(--below-soft); color:var(--below)}
+.duep.ok{background:var(--surface-3); color:var(--muted)}
+
+/* ---------- vocab ---------- */
+.vocab-add{display:grid; grid-template-columns:1fr 1.2fr 1.4fr auto; gap:10px; align-items:end}
+.practice-bar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:16px 0}
+.vlist{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:8px}
+.vcard{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; position:relative}
+.vcard .w{font-weight:700; font-size:1.05rem}
+.vcard .m{font-size:.9rem; margin-top:2px}
+.vcard .e{color:var(--muted); font-size:.85rem; font-style:italic; margin-top:4px}
+.vcard .vst{margin-top:8px; display:flex; gap:6px; flex-wrap:wrap}
+.chip{font-size:.72rem; padding:2px 9px; border-radius:999px; cursor:pointer; border:1px solid var(--line-strong); background:var(--surface); color:var(--muted); font-weight:700; font-family:var(--disp); letter-spacing:.03em}
+.chip.act.new{background:var(--warn-soft); color:var(--warn); border-color:transparent}
+.chip.act.review{background:var(--below-soft); color:var(--below); border-color:transparent}
+.chip.act.known{background:var(--good-soft); color:var(--good); border-color:transparent}
+.vcard .del{position:absolute; top:8px; right:10px}
+/* flashcard / quiz stage */
+.stage{margin:6px 0 4px; background:linear-gradient(160deg,var(--surface-2),var(--surface)); border:1px solid var(--line-strong); border-radius:var(--radius); padding:22px}
+.stage-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-family:var(--disp); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-size:.9rem}
+.flash{perspective:1200px; margin:0 auto; max-width:440px}
+.flash-inner{position:relative; min-height:180px; transition:transform .5s; transform-style:preserve-3d; cursor:pointer}
+.flash.flipped .flash-inner{transform:rotateY(180deg)}
+.flash-face{position:absolute; inset:0; backface-visibility:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:22px; border-radius:var(--radius); border:1px solid var(--line-strong); background:var(--surface)}
+.flash-face.back{transform:rotateY(180deg); background:var(--surface-3)}
+.flash-face .fw{font-family:var(--disp); font-weight:900; font-size:2.2rem; text-transform:uppercase; letter-spacing:.02em}
+.flash-face .fm{font-size:1.15rem; margin-top:4px}
+.flash-face .fe{color:var(--muted); font-style:italic; margin-top:8px}
+.flash-face .tapme{position:absolute; bottom:10px; font-size:.72rem; color:var(--faint)}
+.stage-actions{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap}
+.quiz-q{text-align:center; font-size:1.2rem; margin-bottom:6px}
+.quiz-q .blank{color:var(--gold); font-weight:700}
+.quiz-in{max-width:360px; margin:12px auto 0}
+.quiz-feedback{text-align:center; min-height:1.6em; margin-top:12px; font-weight:600}
+.qf-ok{color:var(--good)} .qf-no{color:var(--below)}
+.scorebar{font-family:var(--disp); font-weight:800; color:var(--gold)}
+
+/* ---------- reflections ---------- */
+.refl-form{display:grid; grid-template-columns:.8fr 1fr; gap:12px}
+.refl-form .full{grid-column:1/-1}
+.refl-list{display:flex; flex-direction:column; gap:10px; margin-top:18px}
+.refl{background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--below); border-radius:var(--radius-sm); padding:12px 14px; position:relative}
+.refl .rh{display:flex; gap:10px; align-items:center; font-size:.78rem; color:var(--muted); margin-bottom:6px; font-family:var(--disp); text-transform:uppercase; letter-spacing:.04em}
+.refl .rh .pp{font-weight:800; color:var(--ink)}
+.refl .fix{margin-top:6px; color:var(--green); font-size:.92rem}
+.refl .fix::before{content:"→ "; font-weight:700}
+
+/* ---------- playbook ---------- */
+.strat{display:grid; grid-template-columns:repeat(2,1fr); gap:16px}
+details.scard{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow)}
+details.scard summary{padding:15px 18px; cursor:pointer; font-family:var(--disp); font-weight:800; font-size:1.15rem; text-transform:uppercase; letter-spacing:.03em; list-style:none; display:flex; justify-content:space-between; align-items:center}
+details.scard summary::-webkit-details-marker{display:none}
+details.scard summary .arw{color:var(--green)}
+details.scard[open] summary .arw{transform:rotate(90deg)}
+.scard .sbody{padding:0 18px 16px}
+.scard ul{margin:0; padding-left:20px; font-size:.93rem}
+.scard ul li{margin-bottom:7px}
+.scard .paper-tag{font-size:.72rem; color:var(--muted); font-family:var(--body); font-weight:500; letter-spacing:0; text-transform:none}
+
+/* ---------- resources ---------- */
+.res-group{margin-bottom:22px}
+.res-group h3{font-family:var(--disp); font-size:1.2rem; text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; display:flex; align-items:center; gap:8px}
+.res-group h3 .dot{width:9px; height:9px; border-radius:50%}
+.res-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; margin-top:10px}
+.res{display:flex; flex-direction:column; gap:2px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:11px 14px; text-decoration:none; color:var(--ink)}
+.res:hover{border-color:var(--green)}
+.res .rt{font-weight:600; font-size:.94rem}
+.res .rd{font-size:.82rem; color:var(--muted)}
+.res .rmeta{font-size:.72rem; color:var(--faint); margin-top:2px}
+.res.usr{border-style:dashed; position:relative}
+.res.usr .del{position:absolute; top:6px; right:8px}
+.add-res{display:grid; grid-template-columns:.8fr 1.3fr 1.6fr auto; gap:10px; align-items:end; margin-top:8px; padding:14px; background:var(--surface-2); border-radius:var(--radius-sm)}
+
+/* ---------- backup ---------- */
+.backup{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-top:26px}
+.backup h3{font-family:var(--disp); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px}
+.backup p{color:var(--muted); font-size:.86rem; margin:0 0 12px; max-width:72ch}
+.backup .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.backup textarea{margin-top:12px; font-size:.78rem; font-family:ui-monospace,monospace}
+
+@media (max-width:860px){
+  .grid2{grid-template-columns:1fr}
+  .phases{grid-template-columns:1fr}
+  .strat{grid-template-columns:1fr}
+  .log-form{grid-template-columns:1fr 1fr}
+  .vocab-add,.hw-form{grid-template-columns:1fr 1fr}
+  .add-res{grid-template-columns:1fr 1fr}
+  .refl-form{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; scroll-behavior:auto!important}}
+</style>
+
+<header class="top"><div class="wrap tb">
+  <div class="logo"><span class="b1">B1</span> NICO'S SEASON</div>
+  <div class="tb-right">
+    <button class="mini-btn" id="bigToggle">A+ Bigger text</button>
+    <div class="count">
+      <div class="n" id="daysLeft">—</div>
+      <div class="lab">days to kick-off</div>
+      <div class="date"><input type="date" id="examDate"></div>
+    </div>
+  </div>
+</div></header>
+
+<nav class="tabs"><div class="wrap" id="tabbar">
+  <button class="tab active" data-tab="overview">Player Card</button>
+  <button class="tab" data-tab="plan">Season Plan</button>
+  <button class="tab" data-tab="log">Match Log</button>
+  <button class="tab" data-tab="training">Training</button>
+  <button class="tab" data-tab="homework">Homework<span class="badge" id="hwBadge" hidden></span></button>
+  <button class="tab" data-tab="vocab">Vocabulary<span class="badge" id="vBadge" hidden></span></button>
+  <button class="tab" data-tab="review">Post-Match</button>
+  <button class="tab" data-tab="playbook">Playbook</button>
+  <button class="tab" data-tab="practice">Practice</button>
+</div></nav>
+
+<main class="wrap">
+
+  <!-- OVERVIEW -->
+  <section class="panel" data-panel="overview">
+    <div class="grid2">
+      <div>
+        <div class="fut" id="futCard"></div>
+        <div class="next-obj">
+          <h3>Ratings to unlock</h3>
+          <div class="obj-row"><span>Pass zone — a comfortable B1</span><span class="rt" style="color:var(--gold)">≈ 62 OVR</span></div>
+          <div class="obj-row"><span>Flying colours — a strong pass</span><span class="rt" style="color:var(--green)">≈ 77 OVR</span></div>
+          <p class="hint" style="margin-top:10px">Rating = your latest score on that paper, out of 99. Beat the mock and the card levels up: bronze → silver → gold.</p>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">The targets</div>
+        <h2 class="sec-title">Two lines to beat</h2>
+        <p class="sec-desc">On every practice paper, aim past the <b>pass zone</b> and towards <b>flying colours</b>. The dashed line is the June mock — where the season starts. Log a new test and the bars move.</p>
+        <div class="card pad" id="goalCard"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="panel" data-panel="plan" hidden>
+    <div class="eyebrow">The road to the exam</div>
+    <h2 class="sec-title">Season plan</h2>
+    <p class="sec-desc">Three phases. Reading and vocabulary come first — that's the biggest gap, and stronger vocabulary lifts listening and writing at the same time.</p>
+    <div class="phases">
+      <div class="phase"><span class="ph-n">Phase 1 · Pre-season</span><h3>Rebuild the base</h3><div class="when">Sept – Dec 2026</div>
+        <ul><li>Learn the shape of each paper (parts, question types, timing).</li><li>Daily vocabulary: build the word bank, review little and often.</li><li>Reading: skim first, then underline only the key information.</li><li>Listening: predict before you hear; learn signpost words.</li><li>One part at a time — accuracy before speed.</li></ul>
+        <div class="checkpoint"><span class="cp-lab">Checkpoint mock · mid-Dec</span>Reading ≥ 12/32 · Listening ≥ 13/25 · Writing ≥ 27/40</div>
+        <div class="reward">🎯 Hit two of three → you pick the next film in English.</div></div>
+      <div class="phase"><span class="ph-n">Phase 2 · Mid-season</span><h3>Build accuracy</h3><div class="when">Jan – Mar 2027</div>
+        <ul><li>Full papers, relaxed timing, then review every wrong answer.</li><li>Listening at real speed: spot the traps, don't match word-for-word.</li><li>Writing: richer vocabulary, natural expressions, ~100 words.</li><li>Start Speaking: Parts 1–4 with a partner.</li><li>Fill the Post-Match log after each test.</li></ul>
+        <div class="checkpoint"><span class="cp-lab">Checkpoint mock · late Mar</span>Reading ≥ 18/32 · Listening ≥ 16/25 · Writing ≥ 31/40</div>
+        <div class="reward">🎯 Reach the pass zone in all three → celebration of your choice.</div></div>
+      <div class="phase"><span class="ph-n">Phase 3 · Finals</span><h3>Sharpen for the whistle</h3><div class="when">Apr – exam 2027</div>
+        <ul><li>Full timed mocks under exam conditions.</li><li>Re-read the error log — close the repeating mistakes.</li><li>Polish Speaking and Writing to sound natural and detailed.</li><li>Light, steady revision — arrive rested and confident.</li></ul>
+        <div class="checkpoint"><span class="cp-lab">Flying-colours target</span>Reading ≥ 24/32 · Listening ≥ 19/25 · Writing ≥ 32/40</div>
+        <div class="reward">🎯 Whistle blows — whatever the score, you turned up ready.</div></div>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section class="panel" data-panel="log" hidden>
+    <div class="eyebrow">Every result counts</div>
+    <h2 class="sec-title">Match log</h2>
+    <p class="sec-desc">Add each practice test. Your player card and the target bars update from your latest scores.</p>
+    <div class="card pad">
+      <div class="log-form">
+        <label class="fld">Test name<input type="text" id="f_name" placeholder="e.g. Test-English Exam 2"></label>
+        <label class="fld">Date<input type="date" id="f_date"></label>
+        <label class="fld">Listening /25<input type="number" id="f_list" min="0" max="25"></label>
+        <label class="fld">Reading /32<input type="number" id="f_read" min="0" max="32"></label>
+        <label class="fld">Writing /40<input type="number" id="f_write" min="0" max="40"></label>
+        <label class="fld">Speaking /100<input type="number" id="f_speak" min="0" max="100" placeholder="optional"></label>
+        <label class="fld full">Note (optional)<input type="text" id="f_note" placeholder="What kind of test? How did it feel?"></label>
+      </div>
+      <div style="margin-top:14px"><button class="btn" id="addResult">Add result</button></div>
+      <div class="tbl-wrap"><table id="logTable"></table></div>
+    </div>
+  </section>
+
+  <!-- TRAINING (habits) -->
+  <section class="panel" data-panel="training" hidden>
+    <div class="eyebrow">Little and often</div>
+    <h2 class="sec-title">Training week</h2>
+    <p class="sec-desc">Tick each day you train. The streak counts days in a row with at least one tick. Edit the habits below to match what you're working on — click a habit's name to rename it, use ✕ to remove, or add a new one.</p>
+    <div class="card pad">
+      <div class="habit-top">
+        <div class="streaks">
+          <div class="streak"><b id="streakN">0</b><span>day streak</span></div>
+          <div class="streak"><b id="weekN">0</b><span>ticks this week</span></div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button class="btn ghost sm" id="weekPrev">←</button>
+          <span id="weekLabel" style="font-family:var(--disp); font-weight:700; min-width:150px; text-align:center"></span>
+          <button class="btn ghost sm" id="weekNext">→</button>
+        </div>
+      </div>
+      <div class="habit-grid"><table class="hg" id="habitTable"></table></div>
+      <div class="addbar">
+        <input type="text" id="newHabit" placeholder="Add a new habit… (e.g. 15 min of writing)">
+        <button class="btn sm" id="addHabit">Add habit</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOMEWORK -->
+  <section class="panel" data-panel="homework" hidden>
+    <div class="eyebrow">Set by the teacher</div>
+    <h2 class="sec-title">Homework</h2>
+    <p class="sec-desc">Assignments and their due dates. Tick them off as they're done — overdue and due-soon tasks are flagged.</p>
+    <div class="card pad">
+      <div class="hw-form">
+        <label class="fld">Task<input type="text" id="hw_title" placeholder="e.g. Reading Part 4 + 10 new words"></label>
+        <label class="fld">Due<input type="date" id="hw_due"></label>
+        <label class="fld">Note (optional)<input type="text" id="hw_note" placeholder="from which book / site"></label>
+        <button class="btn" id="addHw">Add</button>
+      </div>
+      <div class="hw-list" id="hwList"></div>
+    </div>
+  </section>
+
+  <!-- VOCAB -->
+  <section class="panel" data-panel="vocab" hidden>
+    <div class="eyebrow">Your biggest win</div>
+    <h2 class="sec-title">Vocabulary</h2>
+    <p class="sec-desc">Add words you meet, with a short meaning and an example. Mark each <b>New</b>, <b>Review</b> or <b>Known</b>, then train them with flashcards or a quiz.</p>
+    <div class="card pad">
+      <div class="vocab-add">
+        <label class="fld">Word / phrase<input type="text" id="v_word" placeholder="give up"></label>
+        <label class="fld">Meaning<input type="text" id="v_mean" placeholder="stop trying"></label>
+        <label class="fld">Example<input type="text" id="v_ex" placeholder="Don't give up before the exam."></label>
+        <button class="btn" id="addVocab">Add</button>
+      </div>
+      <div class="practice-bar">
+        <button class="btn gold sm" id="startFlash">🃏 Flashcards</button>
+        <button class="btn gold sm" id="startQuiz">✏️ Quiz</button>
+        <label style="display:flex; gap:6px; align-items:center; font-size:.85rem; color:var(--muted)"><input type="checkbox" id="onlyDue" style="width:auto" checked> only words to review</label>
+        <span class="hint" id="vocabCount"></span>
+      </div>
+      <div id="trainArea"></div>
+      <div class="vlist" id="vlist"></div>
+    </div>
+  </section>
+
+  <!-- REVIEW -->
+  <section class="panel" data-panel="review" hidden>
+    <div class="eyebrow">Learn from the tape</div>
+    <h2 class="sec-title">Post-match review</h2>
+    <p class="sec-desc">After a test, note what tripped you up and one thing to do differently. Mistakes become a checklist instead of a worry.</p>
+    <div class="card pad">
+      <div class="refl-form">
+        <label class="fld">Paper<select id="r_paper"><option>Reading</option><option>Listening</option><option>Writing</option><option>Speaking</option><option>Vocabulary</option></select></label>
+        <label class="fld">Date<input type="date" id="r_date"></label>
+        <label class="fld full">What went wrong<textarea id="r_wrong" placeholder="e.g. I didn't know the words in the options, so I guessed."></textarea></label>
+        <label class="fld full">What I'll do differently<textarea id="r_fix" placeholder="e.g. Add option-words I miss to the vocabulary bank."></textarea></label>
+      </div>
+      <div style="margin-top:12px"><button class="btn" id="addRefl">Add review</button></div>
+      <div class="refl-list" id="reflList"></div>
+    </div>
+  </section>
+
+  <!-- PLAYBOOK -->
+  <section class="panel" data-panel="playbook" hidden>
+    <div class="eyebrow">The tactics</div>
+    <h2 class="sec-title">Playbook</h2>
+    <p class="sec-desc">Quick reminders for each paper — the moves that make the difference. Open one before you practise that skill.</p>
+    <div class="strat">
+      <details class="scard" open><summary><span>📖 Reading <span class="paper-tag">· 6 parts · 45 min</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
+        <li>Read the instructions and the question <b>first</b>, then the text.</li><li>Skim once for the general idea before hunting for answers.</li><li>Underline <b>only</b> the key information — names, numbers, opinion words.</li><li>If a word is hard, read the whole sentence — the meaning is often around it.</li><li>Parts 5 & 6 test grammar and set phrases: think what word <i>fits</i>, not just what makes sense.</li><li>Never leave a blank — a sensible guess can be right.</li></ul></div></details>
+      <details class="scard"><summary><span>🎧 Listening <span class="paper-tag">· 4 parts · ~30 min</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
+        <li>Use the pause to <b>predict</b>: a number? a place? a time?</li><li>The answer is usually in <b>different words</b> from the question — don't wait for the exact match.</li><li>Watch for signposts: <i>but, however, actually, in the end</i>.</li><li>Miss one? Let it go and catch the next — don't freeze.</li><li>You hear it twice: first for the answer, second to check.</li><li>Spell gap-fill answers carefully — practise the words you keep meeting.</li></ul></div></details>
+      <details class="scard"><summary><span>✍️ Writing <span class="paper-tag">· 2 tasks · 45 min</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
+        <li>Answer <b>every</b> point in the question — marked first.</li><li>Plan for one minute before you write.</li><li>Aim for ~100 words — room to show detailed, natural language.</li><li>Vary language: linkers (<i>although, so that, as well as</i>), tenses, less common words.</li><li>Match the tone to the task (friendly email vs. article).</li><li>Leave two minutes to check spelling, verbs, punctuation.</li></ul></div></details>
+      <details class="scard"><summary><span>🗣️ Speaking <span class="paper-tag">· 4 parts · with a partner</span></span><span class="arw">›</span></summary><div class="sbody"><ul>
+        <li>Give reasons and examples — never just "yes"/"no".</li><li>Word won't come? Describe it: "the thing you use to…". Keep going.</li><li>Photo task: describe what you see and what is happening.</li><li>React to your partner — it's a conversation, not a speech.</li><li>Speak clearly and steadily; a small pause is fine.</li></ul></div></details>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section class="panel" data-panel="practice" hidden>
+    <div class="eyebrow">Where to train</div>
+    <h2 class="sec-title">Practice ground</h2>
+    <p class="sec-desc">Free, reliable practice by skill. Add your own links at the bottom of each group — the teacher's materials go here too.</p>
+    <div id="resArea"></div>
+    <div class="backup">
+      <h3>Back up your progress</h3>
+      <p>Your log, words, habits and homework are saved in this browser only. To keep a copy or move to another device, copy your data, save it somewhere safe, and paste it back when you need it.</p>
+      <div class="row">
+        <button class="btn ghost sm" id="copyData">Copy my data</button>
+        <button class="btn ghost sm" id="showRestore">Paste to restore</button>
+        <span class="hint" id="copyMsg"></span>
+      </div>
+      <div id="restoreArea" hidden><textarea id="restoreBox" placeholder="Paste your copied data here…"></textarea><div style="margin-top:8px"><button class="btn sm" id="doRestore">Restore from this</button></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const KEY="nico_b1_v2";
+const DEFAULT_EXAM="2027-06-05";
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const SKILLS={
+  listening:{label:"Listening",abbr:"LIS",max:25,mock:9,pass:15,fly:19},
+  reading:{label:"Reading",abbr:"REA",max:32,mock:5,pass:19,fly:24},
+  writing:{label:"Writing",abbr:"WRI",max:40,mock:23,pass:27,fly:32}
+};
+const CURATED=[
+  {skill:"all",name:"Cambridge official – B1 Preliminary prep",desc:"Sample papers & candidate guides from the exam board.",meta:"cambridgeenglish.org",url:"https://www.cambridgeenglish.org/exams-and-tests/qualifications/preliminary/preparation/"},
+  {skill:"all",name:"Test-English – B1 Preliminary exams",desc:"Full practice tests, split by paper, with answers.",meta:"test-english.com",url:"https://test-english.com/exams/b1-preliminary/"},
+  {skill:"all",name:"engxam – 5 free practice tests",desc:"Online and PDF B1 Preliminary mocks.",meta:"engxam.com",url:"https://engxam.com/handbook/5-free-practice-tests-online-pdf-b1-preliminary-pet/"},
+  {skill:"reading",name:"LearnEnglish Teens – B1 reading",desc:"Reading tasks written for teenagers, with exercises.",meta:"British Council",url:"https://learnenglishteens.britishcouncil.org/skills/reading/b1-reading"},
+  {skill:"reading",name:"British Council – B1 reading",desc:"Graded reading texts with comprehension questions.",meta:"learnenglish.britishcouncil.org",url:"https://learnenglish.britishcouncil.org/free-resources/reading/b1"},
+  {skill:"reading",name:"Exam English – B1 reading",desc:"PET-style reading practice by part.",meta:"examenglish.com",url:"https://www.examenglish.com/B1/B1_reading.htm"},
+  {skill:"listening",name:"British Council – B1 listening",desc:"Audio with transcripts and exercises, exam-style.",meta:"learnenglish.britishcouncil.org",url:"https://learnenglish.britishcouncil.org/free-resources/listening/b1"},
+  {skill:"listening",name:"Test-English – B1 listening",desc:"Listening tests at B1 level, with scripts.",meta:"test-english.com",url:"https://test-english.com/listening/b1/"},
+  {skill:"listening",name:"Exam English – PET listening",desc:"Practise each listening part separately.",meta:"examenglish.com",url:"https://www.examenglish.com/PET/PET_listening.html"},
+  {skill:"vocab",name:"Flo-Joe – PET vocabulary",desc:"Topic word lists and exercises for B1 Preliminary.",meta:"flo-joe.co.uk",url:"https://www.flo-joe.co.uk/preliminaryenglish/pet-vocabulary.htm"},
+  {skill:"vocab",name:"Official PET vocabulary – Quizlet",desc:"Flashcard set of the core PET word list.",meta:"quizlet.com",url:"https://quizlet.com/44901729/official-pet-vocabulary-list-flash-cards/"},
+  {skill:"vocab",name:"engxam – vocabulary tips & list (PDF)",desc:"How to build B1 vocabulary, with a downloadable list.",meta:"engxam.com",url:"https://engxam.com/handbook/how-to-practice-improve-vocabulary-tips-list-pdf-b1-preliminary-pet/"},
+  {skill:"writing",name:"Test-English – B1 grammar points",desc:"Grammar the writing paper rewards, with practice.",meta:"test-english.com",url:"https://test-english.com/grammar-points/b1/"}
+];
+const GROUPS=[
+  {key:"all",title:"Full practice tests",color:"var(--green)"},
+  {key:"reading",title:"Reading",color:"var(--below)"},
+  {key:"listening",title:"Listening",color:"var(--warn)"},
+  {key:"vocab",title:"Vocabulary",color:"var(--good)"},
+  {key:"writing",title:"Writing",color:"var(--gold)"}
+];
+const DEFAULT_HABITS=[
+  {id:"h1",text:"10-min vocabulary review"},
+  {id:"h2",text:"One reading OR listening task"},
+  {id:"h3",text:"Note the new words I met"},
+  {id:"h4",text:"Friday recall: what did I do & what confused me?"}
+];
+
+let S=load();
+function load(){
+  let d=null; try{d=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  if(!d) d={};
+  d.examDate=d.examDate||DEFAULT_EXAM;
+  d.results=d.results||[{id:"mock",date:"2026-06-26",name:"June mock",listening:9,reading:5,writing:23,speak:"",note:"Starting point",mock:true}];
+  d.habits=d.habits||{};
+  d.habitDefs=d.habitDefs||DEFAULT_HABITS.map(h=>({...h}));
+  d.homework=d.homework||[];
+  d.vocab=d.vocab||[];
+  d.reflections=d.reflections||[];
+  d.resources=d.resources||[];
+  d.settings=d.settings||{};
+  return d;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ----- tabs ----- */
+document.getElementById("tabbar").addEventListener("click",e=>{
+  const b=e.target.closest(".tab"); if(!b)return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));
+  const name=b.dataset.tab;
+  document.querySelectorAll(".panel").forEach(p=>p.hidden=(p.dataset.panel!==name));
+  window.scrollTo({top:0,behavior:"instant"in window?"instant":"auto"});
+});
+
+/* ----- scores/ratings ----- */
+function latest(skill){const s=S.results.filter(r=>r[skill]!=null&&r[skill]!==""&&!isNaN(r[skill]));return s.length?s[s.length-1]:null;}
+function rawVal(skill){const l=latest(skill);return l?Number(l[skill]):SKILLS[skill].mock;}
+function rating(skill){return Math.round(rawVal(skill)/SKILLS[skill].max*99);}
+function speakRating(){const s=S.results.filter(r=>r.speak!=null&&r.speak!==""&&!isNaN(r.speak));return s.length?Math.round(Number(s[s.length-1].speak)*0.99):null;}
+function zoneOf(skill,v){const c=SKILLS[skill];return v>=c.fly?"fly":v>=c.pass?"pass":"below";}
+function tier(ovr){return ovr>=75?"elite":ovr>=65?"gold":ovr>=50?"silver":"bronze";}
+const TIERLAB={elite:"Elite",gold:"Gold",silver:"Silver",bronze:"Bronze"};
+
+function renderCount(){
+  document.getElementById("examDate").value=S.examDate;
+  const diff=Math.ceil((new Date(S.examDate)-new Date(todayISO()))/86400000);
+  document.getElementById("daysLeft").textContent=diff>0?diff:(diff===0?"0":"—");
+}
+
+/* ----- player card ----- */
+function renderCard(){
+  const rL=rating("listening"),rR=rating("reading"),rW=rating("writing"),rS=speakRating();
+  const arr=[rL,rR,rW]; if(rS!=null)arr.push(rS);
+  const ovr=Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+  const tr=tier(ovr);
+  const stat=(k,v,na)=>`<div class="fut-stat ${na?'na':''}"><span class="v">${na?'–':v}</span><span class="k">${k}</span></div>`;
+  document.getElementById("futCard").className="fut tier-"+tr;
+  document.getElementById("futCard").innerHTML=`
+    <div class="fut-top">
+      <div class="fut-ovr"><div class="num">${ovr}</div><div class="pos">OVR</div><span class="tier">${TIERLAB[tr]}</span></div>
+      <div class="fut-badge"><span class="big">PET</span>Level B1</div>
+    </div>
+    <div class="fut-name">Nico</div>
+    <div class="fut-stats">
+      ${stat("LIS",rL)}${stat("REA",rR)}${stat("WRI",rW)}${stat("SPE",rS,rS==null)}
+    </div>
+    <div class="fut-foot">${rS==null?"Speaking rating unlocks in Phase 2":"Full squad — all four skills in play"}</div>`;
+}
+
+/* ----- goals ----- */
+function renderGoals(){
+  const wrap=document.getElementById("goalCard"); wrap.innerHTML="";
+  Object.keys(SKILLS).forEach(sk=>{
+    const c=SKILLS[sk],val=rawVal(sk),z=zoneOf(sk,val),delta=val-c.mock;
+    const col=z==="fly"?"var(--good)":z==="pass"?"var(--warn)":"var(--below)";
+    const p=v=>Math.min(100,Math.max(0,v/c.max*100));
+    const g=document.createElement("div");g.className="goal";
+    g.innerHTML=`<div class="r1"><span class="nm">${c.label}</span><span class="now">now <b>${val}/${c.max}</b> ${delta>0?'· <span style="color:var(--good)">+'+delta+'</span>':''}</span></div>
+      <div class="track">
+        <div class="fill" style="width:${p(val)}%;background:${col}"></div>
+        <div class="mockmark" style="left:${p(c.mock)}%"><span>mock ${c.mock}</span></div>
+        <div class="mark" style="left:${p(c.pass)}%;background:var(--warn)"><span style="color:var(--warn)">pass ${c.pass}</span></div>
+        <div class="mark" style="left:${p(c.fly)}%;background:var(--gold)"><span style="color:var(--gold)">flying ${c.fly}</span></div>
+      </div>`;
+    wrap.appendChild(g);
+  });
+  const n=document.createElement("div");n.className="goal";
+  n.innerHTML=`<p class="note-approx">Raw-mark targets are a working guide, not Cambridge's official conversion (that scaled score isn't published). Roughly 60% of a paper's marks = the pass zone; about 75%+ = a strong pass.</p>`;
+  wrap.appendChild(n);
+}
+
+/* ----- log ----- */
+function renderLog(){
+  const t=document.getElementById("logTable");
+  const rows=S.results.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  t.innerHTML=`<thead><tr><th>Date</th><th>Test</th><th class="num">LIS/25</th><th class="num">REA/32</th><th class="num">WRI/40</th><th class="num">SPE</th><th></th></tr></thead><tbody>`+
+    rows.map(r=>`<tr class="${r.mock?'mock':''}"><td>${esc(r.date)}</td><td>${esc(r.name)} ${r.mock?'<span class="tag">mock</span>':''}${r.note?'<div style="font-size:.8rem;color:var(--muted)">'+esc(r.note)+'</div>':''}</td><td class="num">${r.listening??'—'}</td><td class="num">${r.reading??'—'}</td><td class="num">${r.writing??'—'}</td><td class="num">${(r.speak===''||r.speak==null)?'—':esc(r.speak)}</td><td>${r.mock?'':'<button class="del" data-del="'+r.id+'">✕</button>'}</td></tr>`).join("")+`</tbody>`;
+  t.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.results=S.results.filter(x=>x.id!==b.dataset.del);save();refreshScores();});
+}
+const numOrNull=v=>{v=(v||"").trim();if(v==="")return null;const n=Number(v);return isNaN(n)?null:n;};
+document.getElementById("addResult").onclick=()=>{
+  const r={id:uid(),name:document.getElementById("f_name").value.trim()||"Practice test",date:document.getElementById("f_date").value||todayISO(),
+    listening:numOrNull(document.getElementById("f_list").value),reading:numOrNull(document.getElementById("f_read").value),
+    writing:numOrNull(document.getElementById("f_write").value),speak:document.getElementById("f_speak").value.trim(),note:document.getElementById("f_note").value.trim()};
+  S.results.push(r);save();["f_name","f_list","f_read","f_write","f_speak","f_note"].forEach(id=>document.getElementById(id).value="");refreshScores();
+};
+function refreshScores(){renderCard();renderGoals();renderLog();}
+
+/* ----- habits ----- */
+let weekOffset=0;
+function mondayOf(o){const d=new Date(todayISO());const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+o*7);return d;}
+function renderHabits(){
+  const mon=mondayOf(weekOffset),iso=d=>d.toISOString().slice(0,10),today=todayISO();
+  const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+  const dn=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  document.getElementById("weekLabel").textContent=days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'})+" – "+days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  let h=`<thead><tr><th class="hname">Habit</th>`+days.map((d,i)=>`<th class="${iso(d)===today?'today':''}">${dn[i]}<br><span style="font-family:var(--body);font-weight:400">${d.getDate()}</span></th>`).join("")+`</tr></thead><tbody>`;
+  if(!S.habitDefs.length) h+=`<tr><td class="hname" colspan="8"><span class="empty">No habits yet — add one below.</span></td></tr>`;
+  S.habitDefs.forEach(hb=>{
+    h+=`<tr><td class="hname"><span class="hedit" data-hid="${hb.id}">${esc(hb.text)}</span><button class="del" data-hdel="${hb.id}" title="Remove">✕</button></td>`+
+      days.map(d=>{const k=iso(d),on=S.habits[k]&&S.habits[k][hb.id],future=k>today;return `<td><div class="hcell ${on?'on':''} ${future?'future':''}" data-d="${k}" data-h="${hb.id}"></div></td>`;}).join("")+`</tr>`;
+  });
+  h+=`</tbody>`;
+  const t=document.getElementById("habitTable");t.innerHTML=h;
+  t.querySelectorAll(".hcell:not(.future)").forEach(c=>c.onclick=()=>{const k=c.dataset.d,hid=c.dataset.h;S.habits[k]=S.habits[k]||{};if(S.habits[k][hid])delete S.habits[k][hid];else S.habits[k][hid]=true;if(!Object.keys(S.habits[k]).length)delete S.habits[k];save();renderHabits();});
+  t.querySelectorAll("[data-hdel]").forEach(b=>b.onclick=()=>{S.habitDefs=S.habitDefs.filter(x=>x.id!==b.dataset.hdel);save();renderHabits();});
+  t.querySelectorAll(".hedit").forEach(s=>s.onclick=()=>{const hb=S.habitDefs.find(x=>x.id===s.dataset.hid);const v=prompt("Rename habit:",hb.text);if(v&&v.trim()){hb.text=v.trim();save();renderHabits();}});
+  // streak: consecutive days with any tick
+  let streak=0,d=new Date(today);while(true){const k=d.toISOString().slice(0,10);if(S.habits[k]&&Object.keys(S.habits[k]).length){streak++;d.setDate(d.getDate()-1);}else break;}
+  document.getElementById("streakN").textContent=streak;
+  let wc=0;days.forEach(dd=>{const k=iso(dd);if(S.habits[k])wc+=Object.keys(S.habits[k]).length;});
+  document.getElementById("weekN").textContent=wc;
+}
+document.getElementById("addHabit").onclick=()=>{const i=document.getElementById("newHabit");const v=i.value.trim();if(!v)return;S.habitDefs.push({id:uid(),text:v});i.value="";save();renderHabits();};
+document.getElementById("newHabit").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addHabit").click();});
+document.getElementById("weekPrev").onclick=()=>{weekOffset--;renderHabits();};
+document.getElementById("weekNext").onclick=()=>{weekOffset++;renderHabits();};
+
+/* ----- homework ----- */
+function renderHw(){
+  const l=document.getElementById("hwList");l.innerHTML="";
+  const today=todayISO();
+  const items=S.homework.slice().sort((a,b)=>(a.done-b.done)||((a.due||"9999").localeCompare(b.due||"9999")));
+  if(!items.length)l.innerHTML='<div class="empty">No homework yet. Add the first task.</div>';
+  let openCount=0;
+  items.forEach(hw=>{
+    if(!hw.done)openCount++;
+    let cls="",dp="ok",dtxt="";
+    if(hw.due){const days=Math.ceil((new Date(hw.due)-new Date(today))/86400000);
+      if(!hw.done&&days<0){cls="overdue";dp="over";dtxt=(-days)+"d late";}
+      else if(!hw.done&&days<=3){cls="due-soon";dp="soon";dtxt=days===0?"today":days+"d left";}
+      else{dtxt=new Date(hw.due).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+    }
+    if(hw.done)cls="done";
+    const el=document.createElement("div");el.className="hw "+cls;
+    el.innerHTML=`<div class="chk" data-tg="${hw.id}">${hw.done?'✓':''}</div>
+      <div class="body"><div class="ti">${esc(hw.title)}</div>${hw.note?'<div class="meta">'+esc(hw.note)+'</div>':''}</div>
+      ${hw.due?'<span class="duep '+dp+'">'+dtxt+'</span>':''}
+      <button class="del" data-hwdel="${hw.id}">✕</button>`;
+    l.appendChild(el);
+  });
+  l.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{const hw=S.homework.find(x=>x.id===b.dataset.tg);hw.done=!hw.done;save();renderHw();});
+  l.querySelectorAll("[data-hwdel]").forEach(b=>b.onclick=()=>{S.homework=S.homework.filter(x=>x.id!==b.dataset.hwdel);save();renderHw();});
+  const badge=document.getElementById("hwBadge");
+  if(openCount){badge.hidden=false;badge.textContent=openCount;const anyOver=S.homework.some(h=>!h.done&&h.due&&h.due<today);badge.classList.toggle("alert",anyOver);}else badge.hidden=true;
+}
+document.getElementById("addHw").onclick=()=>{const t=document.getElementById("hw_title").value.trim();if(!t)return;S.homework.push({id:uid(),title:t,due:document.getElementById("hw_due").value,note:document.getElementById("hw_note").value.trim(),done:false});["hw_title","hw_due","hw_note"].forEach(id=>document.getElementById(id).value="");save();renderHw();};
+
+/* ----- vocab list ----- */
+function renderVocab(){
+  const list=document.getElementById("vlist");list.innerHTML="";
+  if(!S.vocab.length)list.innerHTML='<div class="empty">No words yet. Add the first word you want to remember.</div>';
+  S.vocab.slice().reverse().forEach(v=>{
+    const el=document.createElement("div");el.className="vcard";
+    el.innerHTML=`<button class="del" data-v="${v.id}">✕</button><div class="w">${esc(v.word)}</div>${v.meaning?'<div class="m">'+esc(v.meaning)+'</div>':''}${v.example?'<div class="e">"'+esc(v.example)+'"</div>':''}<div class="vst">${["new","review","known"].map(st=>`<span class="chip ${v.status===st?'act '+st:''}" data-s="${st}" data-id="${v.id}">${st[0].toUpperCase()+st.slice(1)}</span>`).join("")}</div>`;
+    list.appendChild(el);
+  });
+  list.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{S.vocab=S.vocab.filter(x=>x.id!==b.dataset.v);save();renderVocab();});
+  list.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const v=S.vocab.find(x=>x.id===c.dataset.id);if(v){v.status=c.dataset.s;save();renderVocab();}});
+  const due=S.vocab.filter(v=>v.status!=="known").length;
+  const badge=document.getElementById("vBadge");if(due){badge.hidden=false;badge.textContent=due;}else badge.hidden=true;
+  document.getElementById("vocabCount").textContent=S.vocab.length?`${S.vocab.length} words · ${due} to review`:"";
+}
+document.getElementById("addVocab").onclick=()=>{const w=document.getElementById("v_word").value.trim();if(!w)return;S.vocab.push({id:uid(),word:w,meaning:document.getElementById("v_mean").value.trim(),example:document.getElementById("v_ex").value.trim(),status:"new"});save();["v_word","v_mean","v_ex"].forEach(id=>document.getElementById(id).value="");renderVocab();document.getElementById("v_word").focus();};
+
+/* ----- vocab training: flashcards + quiz ----- */
+function trainPool(){const only=document.getElementById("onlyDue").checked;let p=S.vocab.filter(v=>only?v.status!=="known":true);return p;}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let flashQ=[],flashI=0;
+document.getElementById("startFlash").onclick=()=>{const pool=trainPool();const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">No words to practise. Add some, or untick "only words to review".</div></div>';return;}flashQ=shuffle(pool);flashI=0;showFlash();};
+function showFlash(){
+  const v=flashQ[flashI],a=document.getElementById("trainArea");
+  a.innerHTML=`<div class="stage">
+    <div class="stage-head"><span>Flashcards</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
+    <div class="flash" id="flashEl"><div class="flash-inner">
+      <div class="flash-face front"><div class="fw">${esc(v.word)}</div><div class="tapme">tap to flip</div></div>
+      <div class="flash-face back"><div class="fm">${esc(v.meaning||"(no meaning saved)")}</div>${v.example?'<div class="fe">"'+esc(v.example)+'"</div>':''}<div class="tapme">tap to flip</div></div>
+    </div></div>
+    <div class="stage-actions">
+      <button class="btn ghost sm" data-mark="review">Still learning</button>
+      <button class="btn sm" data-mark="known">Got it ✓</button>
+      <button class="btn gold sm" id="flashNext">Next →</button>
+    </div></div>`;
+  document.getElementById("flashEl").onclick=()=>document.getElementById("flashEl").classList.toggle("flipped");
+  a.querySelectorAll("[data-mark]").forEach(b=>b.onclick=()=>{v.status=b.dataset.mark;save();renderVocab();next();});
+  document.getElementById("flashNext").onclick=next;
+  function next(){flashI++;if(flashI>=flashQ.length){a.innerHTML='<div class="stage"><div style="text-align:center">🎉 <b>Deck complete</b> — '+flashQ.length+' cards. <div style="margin-top:10px"><button class="btn sm" id="againF">Go again</button></div></div></div>';document.getElementById("againF").onclick=()=>document.getElementById("startFlash").click();}else showFlash();}
+}
+let quizQ=[],quizI=0,quizScore=0;
+document.getElementById("startQuiz").onclick=()=>{const pool=trainPool().filter(v=>v.meaning);const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">Quiz needs words that have a meaning saved. Add meanings, or untick "only words to review".</div></div>';return;}quizQ=shuffle(pool);quizI=0;quizScore=0;showQuiz();};
+function showQuiz(){
+  const v=quizQ[quizI],a=document.getElementById("trainArea");
+  const ex=v.example?esc(v.example).replace(new RegExp(v.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),"ig"),'<span class="blank">_____</span>'):"";
+  a.innerHTML=`<div class="stage">
+    <div class="stage-head"><span>Quiz — type the word</span><span class="scorebar">Score ${quizScore} / ${quizQ.length}</span></div>
+    <div class="quiz-q"><b>${esc(v.meaning)}</b></div>
+    ${ex?'<div class="quiz-q" style="font-size:1rem;color:var(--muted);font-style:italic">'+ex+'</div>':''}
+    <div class="quiz-in"><input type="text" id="quizInput" placeholder="type the word or phrase" autocomplete="off"></div>
+    <div class="quiz-feedback" id="quizFb"></div>
+    <div class="stage-actions"><button class="btn sm" id="quizCheck">Check</button><button class="btn gold sm" id="quizNext" hidden>Next →</button></div>
+    <div style="text-align:center;margin-top:6px"><span class="scorebar">${quizI+1} / ${quizQ.length}</span></div>
+  </div>`;
+  const inp=document.getElementById("quizInput");inp.focus();
+  let answered=false;
+  function check(){
+    if(answered)return;answered=true;
+    const guess=inp.value.trim().toLowerCase(),correct=v.word.trim().toLowerCase();
+    const fb=document.getElementById("quizFb");
+    if(guess===correct){quizScore++;fb.className="quiz-feedback qf-ok";fb.textContent="✓ Correct!";v.status="known";}
+    else{fb.className="quiz-feedback qf-no";fb.innerHTML="Answer: <b>"+esc(v.word)+"</b>"+(guess?"":" (skipped)");if(v.status==="new")v.status="review";}
+    save();renderVocab();
+    document.getElementById("quizCheck").hidden=true;document.getElementById("quizNext").hidden=false;document.getElementById("quizNext").focus();
+    document.querySelector(".stage-head .scorebar").textContent="Score "+quizScore+" / "+quizQ.length;
+  }
+  document.getElementById("quizCheck").onclick=check;
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){if(answered)document.getElementById("quizNext").click();else check();}});
+  document.getElementById("quizNext").onclick=()=>{quizI++;if(quizI>=quizQ.length){const pct=Math.round(quizScore/quizQ.length*100);a.innerHTML='<div class="stage"><div style="text-align:center"><div class="scorebar" style="font-size:2rem">'+quizScore+' / '+quizQ.length+'</div><div style="margin-top:6px;color:var(--muted)">'+pct+'% this round</div><div style="margin-top:12px"><button class="btn sm" id="againQ">Play again</button></div></div></div>';document.getElementById("againQ").onclick=()=>document.getElementById("startQuiz").click();}else showQuiz();};
+}
+
+/* ----- reflections ----- */
+function renderRefl(){
+  const l=document.getElementById("reflList");l.innerHTML="";
+  if(!S.reflections.length)l.innerHTML='<div class="empty">No reviews yet. Add one after your next test.</div>';
+  S.reflections.slice().reverse().forEach(r=>{const el=document.createElement("div");el.className="refl";el.innerHTML=`<button class="del" data-r="${r.id}" style="position:absolute;top:10px;right:12px">✕</button><div class="rh"><span class="pp">${esc(r.paper)}</span><span>${esc(r.date)}</span></div><div>${esc(r.wrong)}</div>${r.fix?'<div class="fix">'+esc(r.fix)+'</div>':''}`;l.appendChild(el);});
+  l.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{S.reflections=S.reflections.filter(x=>x.id!==b.dataset.r);save();renderRefl();});
+}
+document.getElementById("addRefl").onclick=()=>{const w=document.getElementById("r_wrong").value.trim();if(!w)return;S.reflections.push({id:uid(),paper:document.getElementById("r_paper").value,date:document.getElementById("r_date").value||todayISO(),wrong:w,fix:document.getElementById("r_fix").value.trim()});save();document.getElementById("r_wrong").value="";document.getElementById("r_fix").value="";renderRefl();};
+
+/* ----- resources ----- */
+function renderRes(){
+  const area=document.getElementById("resArea");area.innerHTML="";
+  GROUPS.forEach(g=>{
+    const grp=document.createElement("div");grp.className="res-group";
+    grp.innerHTML=`<h3><span class="dot" style="background:${g.color}"></span>${g.title}</h3>`;
+    const list=document.createElement("div");list.className="res-list";
+    CURATED.filter(r=>r.skill===g.key).forEach(r=>{const a=document.createElement("a");a.className="res";a.href=r.url;a.target="_blank";a.rel="noopener";a.innerHTML=`<span class="rt">${esc(r.name)}</span><span class="rd">${esc(r.desc)}</span><span class="rmeta">${esc(r.meta)} ↗</span>`;list.appendChild(a);});
+    S.resources.filter(r=>r.skill===g.key).forEach(r=>{const a=document.createElement("a");a.className="res usr";a.href=r.url;a.target="_blank";a.rel="noopener";a.innerHTML=`<button class="del" data-ru="${r.id}">✕</button><span class="rt">${esc(r.label)}</span><span class="rmeta">${esc(r.url).replace(/^https?:\/\//,'').slice(0,40)} ↗ · added by you</span>`;list.appendChild(a);});
+    grp.appendChild(list);
+    const add=document.createElement("div");add.className="add-res";
+    add.innerHTML=`<label class="fld" style="grid-column:1/-1;margin-bottom:-4px">Add your own link to ${g.title}</label><input type="text" placeholder="Label" data-af="label" data-g="${g.key}"><input type="text" placeholder="https://…" data-af="url" data-g="${g.key}" style="grid-column:span 2"><button class="btn sm" data-addres="${g.key}">Add</button>`;
+    grp.appendChild(add);area.appendChild(grp);
+  });
+  area.querySelectorAll("[data-ru]").forEach(b=>b.onclick=e=>{e.preventDefault();S.resources=S.resources.filter(x=>x.id!==b.dataset.ru);save();renderRes();});
+  area.querySelectorAll("[data-addres]").forEach(b=>b.onclick=()=>{const g=b.dataset.addres;const label=area.querySelector(`[data-af="label"][data-g="${g}"]`).value.trim();let url=area.querySelector(`[data-af="url"][data-g="${g}"]`).value.trim();if(!label||!url)return;if(!/^https?:\/\//.test(url))url="https://"+url;S.resources.push({id:uid(),skill:g,label,url});save();renderRes();});
+}
+
+/* ----- header + backup ----- */
+document.getElementById("examDate").onchange=e=>{S.examDate=e.target.value||DEFAULT_EXAM;save();renderCount();};
+function applyBig(){document.body.classList.toggle("big",!!S.settings.big);}
+document.getElementById("bigToggle").onclick=()=>{S.settings.big=!S.settings.big;save();applyBig();};
+document.getElementById("copyData").onclick=async()=>{const txt=JSON.stringify(S),msg=document.getElementById("copyMsg");try{await navigator.clipboard.writeText(txt);msg.textContent="Copied — paste it somewhere safe.";}catch(e){document.getElementById("restoreArea").hidden=false;document.getElementById("restoreBox").value=txt;msg.textContent="Select the text below and copy it.";}setTimeout(()=>msg.textContent="",4000);};
+document.getElementById("showRestore").onclick=()=>{const r=document.getElementById("restoreArea");r.hidden=!r.hidden;};
+document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=Object.assign(load(),d);save();location.reload();}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
+
+/* ----- init ----- */
+document.getElementById("f_date").value=todayISO();
+document.getElementById("r_date").value=todayISO();
+applyBig();renderCount();renderCard();renderGoals();renderLog();renderHabits();renderHw();renderVocab();renderRefl();renderRes();
+</script>
