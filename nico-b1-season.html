@@ -29,7 +29,6 @@
   --disp:"Saira Condensed", "Arial Narrow", sans-serif;
   --body:"Lexend", system-ui, -apple-system, sans-serif;
 }
-body.big{--fs:19px}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
@@ -56,8 +55,6 @@ header.top{border-bottom:1px solid var(--line); background:linear-gradient(180de
 .count .n{font-size:2rem; font-weight:900; color:var(--gold)}
 .count .lab{font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-family:var(--body); font-weight:600}
 .count .date input{background:var(--surface-2); border:1px solid var(--line-strong); color:var(--ink); border-radius:6px; padding:3px 7px; font-family:var(--body); font-size:.8rem; color-scheme:dark; margin-top:4px}
-.mini-btn{background:var(--surface-2); color:var(--ink); border:1px solid var(--line-strong); border-radius:999px; padding:7px 14px; font-family:var(--body); font-size:.84rem; cursor:pointer}
-.mini-btn:hover{border-color:var(--green)}
 
 /* ---------- tabs ---------- */
 nav.tabs{position:sticky; top:0; z-index:30; background:rgba(11,17,15,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
@@ -361,7 +358,11 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .hm-head{display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:8px}
 .hm-head span{text-align:center; font-family:var(--disp); font-weight:700; color:var(--muted); font-size:.8rem}
 .hm-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px}
-.hm-cell{aspect-ratio:1; border-radius:8px; background:var(--surface-3); border:1px solid var(--line)}
+.hm-cell{aspect-ratio:1; border-radius:8px; background:var(--surface-3); border:1px solid var(--line); position:relative}
+.hm-cell .hm-d{position:absolute; top:3px; right:5px; font-size:.62rem; line-height:1; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums}
+.hm-cell.l2 .hm-d,.hm-cell.l3 .hm-d{color:#04170f}
+.hm-cell.today .hm-d{color:var(--gold); top:2px; right:4px}
+.hm-cell.l3.today .hm-d{color:#04170f}
 .hm-cell.l1{background:#1f5b47} .hm-cell.l2{background:#1f9268} .hm-cell.l3{background:var(--green)}
 .hm-cell.today{border:2px solid var(--gold)}
 .hm-legend{display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:12px; font-size:.78rem; color:var(--muted)}
@@ -369,13 +370,62 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .daynote{border:1px dashed var(--line-strong); background:var(--surface-2); border-radius:10px; padding:12px 14px; width:100%; font-family:inherit; color:var(--ink); resize:vertical; min-height:48px; font-size:.95rem; line-height:1.5}
 .savedtick{color:var(--green); font-size:.8rem; margin-left:8px}
 @media (max-width:860px){ .train-grid{grid-template-columns:1fr} .log-form{grid-template-columns:1fr 1fr} .sug-add{grid-template-columns:1fr 1fr} }
+/* ---------- phones ---------- */
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
+.t-short{display:none}
+.log-form>*,.sug-add>*,.vocab-add>*,.add-res>*,.train-grid>*,.grid2>*{min-width:0}
+input,select,textarea{min-width:0; max-width:100%}
+@media (hover:none){.week-list .del{opacity:1}}
+@media (max-width:640px){
+  .wrap{padding:0 14px}
+  .fut{width:100%; max-width:320px}
+  /* header on one row: logo left, sync dot and countdown right */
+  .tb{flex-wrap:nowrap; gap:10px; padding:10px 0}
+  .logo{font-size:1.15rem; gap:7px; white-space:nowrap}
+  .logo .b1{font-size:.9rem; padding:1px 7px}
+  .tb-right{flex-wrap:nowrap; gap:10px}
+  .sync{font-size:0; gap:0; padding:7px}
+  .count .n{font-size:1.5rem}
+  .count .lab{font-size:.58rem; letter-spacing:.06em}
+  .count .date{display:none}
+  /* all five tabs fit */
+  nav.tabs .wrap{padding:0 4px; overflow:hidden; gap:0}
+  .tab{flex:1 1 0; min-width:0; padding:13px 2px 11px; font-size:.9rem; letter-spacing:.03em; text-align:center}
+  .tab .badge{margin-left:3px; min-width:15px; padding:0 4px; font-size:.6rem}
+  .t-full{display:none} .t-short{display:inline}
+  /* 16px text in boxes, so tapping one doesn't zoom the page */
+  input[type=text],input[type=number],input[type=date],select,textarea{font-size:16px}
+  /* forms: one field per row */
+  .log-form,.vocab-add,.add-res{grid-template-columns:1fr}
+  .add-res>*{grid-column:1/-1!important}
+  .log-form textarea{min-height:92px}
+  .vocab-add .btn,.add-res .btn{justify-self:start}
+  .sug-add{grid-template-columns:1fr auto}
+  .sug-add input{grid-column:1/-1}
+  /* match log: each result is a small stacked block, no table columns to collide */
+  .tbl-wrap{overflow:visible}
+  #logTable,#logTable tbody{display:block}
+  #logTable thead{display:none}
+  #logTable tr{display:grid; grid-template-columns:1fr auto auto; column-gap:12px; row-gap:2px; align-items:center; padding:12px 0; border-bottom:1px solid var(--line)}
+  #logTable td{border:none; padding:0; text-align:left; background:none!important}
+  #logTable tr.mock{background:var(--surface-2); margin:0 -10px; padding:12px 10px; border-radius:8px; border-bottom:none; margin-bottom:6px}
+  #logTable td:nth-child(1){grid-row:2; grid-column:1/-1; color:var(--muted); font-size:.8rem; white-space:nowrap}
+  #logTable td:nth-child(2){grid-row:1; grid-column:1}
+  #logTable td:nth-child(3){grid-row:1; grid-column:2; white-space:nowrap}
+  #logTable td:nth-child(4){grid-row:3; grid-column:1/-1}
+  #logTable td:nth-child(5){grid-row:1; grid-column:3}
+  #logTable td:nth-child(5):empty{display:none}
+  /* goal bars: "flying" label under the bar so it can't sit on top of "pass" */
+  .track .mark+.mark span{top:auto; bottom:-17px}
+  .goal{padding:18px 0 22px}
+  .hm-grid,.hm-head{gap:5px}
+}
 </style>
 
 <header class="top"><div class="wrap tb">
   <div class="logo"><span class="b1">B1</span> NICO'S SEASON</div>
   <div class="tb-right">
     <span class="sync" id="syncPill">Saved on this device</span>
-    <button class="mini-btn" id="bigToggle">A+ Bigger text</button>
     <div class="count">
       <div class="n" id="daysLeft">—</div>
       <div class="lab">days to kick-off</div>
@@ -386,10 +436,10 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 <div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only.</div>
 
 <nav class="tabs"><div class="wrap" id="tabbar">
-  <button class="tab active" data-tab="overview">Player Card</button>
-  <button class="tab" data-tab="log">Match Log</button>
+  <button class="tab active" data-tab="overview"><span class="t-full">Player Card</span><span class="t-short">Card</span></button>
+  <button class="tab" data-tab="log"><span class="t-full">Match Log</span><span class="t-short">Log</span></button>
   <button class="tab" data-tab="training">Training</button>
-  <button class="tab" data-tab="vocab">Vocabulary<span class="badge" id="vBadge" hidden></span></button>
+  <button class="tab" data-tab="vocab"><span class="t-full">Vocabulary</span><span class="t-short">Words</span><span class="badge" id="vBadge" hidden></span></button>
   <button class="tab" data-tab="practice">Practice</button>
 </div></nav>
 
@@ -539,7 +589,8 @@ const TEACHER=(()=>{const q=location.search+location.hash;
   try{if(/[?#&]teacher\b/.test(q))localStorage.setItem("nico_teacher","1");if(/[?#&]student\b/.test(q))localStorage.removeItem("nico_teacher");return localStorage.getItem("nico_teacher")==="1";}
   catch(e){return /[?#&]teacher\b/.test(q);}})();
 const DEFAULT_EXAM="2027-06-05";
-const todayISO=()=>new Date().toISOString().slice(0,10);
+/* Today's date where the user is (not UTC), so an evening tick in Uruguay lands on the right day. */
+const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);};
 const SKILLS={
   listening:{label:"Listening",abbr:"LIS",max:25,mock:9,pass:15,fly:19},
   reading:{label:"Reading",abbr:"REA",max:32,mock:5,pass:19,fly:24},
@@ -808,13 +859,13 @@ document.getElementById("addSug").onclick=()=>{const i=document.getElementById("
 document.getElementById("sugText").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addSug").click();});
 function renderHeatmap(){
   const WEEKS=5,today=todayISO(),iso=d=>d.toISOString().slice(0,10);
-  const base=new Date(today);const day=(base.getDay()+6)%7;base.setDate(base.getDate()-day-7*(WEEKS-1));
+  const base=new Date(today);const day=(base.getUTCDay()+6)%7;base.setUTCDate(base.getUTCDate()-day-7*(WEEKS-1));
   const grid=document.getElementById("hmGrid");grid.innerHTML="";
-  for(let i=0;i<WEEKS*7;i++){const d=new Date(base);d.setDate(base.getDate()+i);const k=iso(d);
+  for(let i=0;i<WEEKS*7;i++){const d=new Date(base);d.setUTCDate(base.getUTCDate()+i);const k=iso(d);
     const cnt=S.habits[k]?Object.keys(S.habits[k]).length:0;const lvl=cnt===0?0:cnt===1?1:cnt===2?2:3;
     const cell=document.createElement("div");cell.className="hm-cell l"+lvl+(k===today?" today":"");if(k>today)cell.style.opacity=".3";
-    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+(cnt?` · ${cnt} done`:"");grid.appendChild(cell);}
-  let streak=0,d=new Date(today);while(true){const k=d.toISOString().slice(0,10);if(S.habits[k]&&Object.keys(S.habits[k]).length){streak++;d.setDate(d.getDate()-1);}else break;}
+    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})+(cnt?` · ${cnt} done`:"");cell.innerHTML=`<span class="hm-d">${d.getUTCDate()}</span>`;grid.appendChild(cell);}
+  let streak=0,d=new Date(today);while(true){const k=d.toISOString().slice(0,10);if(S.habits[k]&&Object.keys(S.habits[k]).length){streak++;d.setUTCDate(d.getUTCDate()-1);}else break;}
   document.getElementById("streakN").textContent=streak;
 }
 function renderNote(){document.getElementById("dayNote").value=S.dayNotes[todayISO()]||"";}
@@ -918,14 +969,12 @@ function renderRes(){
 
 /* ----- header + backup ----- */
 document.getElementById("examDate").onchange=e=>{S.examDate=e.target.value||DEFAULT_EXAM;save();renderCount();};
-function applyBig(){document.body.classList.toggle("big",!!S.settings.big);}
-document.getElementById("bigToggle").onclick=()=>{S.settings.big=!S.settings.big;save();applyBig();};
 document.getElementById("copyData").onclick=async()=>{const txt=JSON.stringify(S),msg=document.getElementById("copyMsg");try{await navigator.clipboard.writeText(txt);msg.textContent="Copied — paste it somewhere safe.";}catch(e){document.getElementById("restoreArea").hidden=false;document.getElementById("restoreBox").value=txt;msg.textContent="Select the text below and copy it.";}setTimeout(()=>msg.textContent="",4000);};
 document.getElementById("showRestore").onclick=()=>{const r=document.getElementById("restoreArea");r.hidden=!r.hidden;};
 document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
-function renderAll(){applyBig();renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderVocab();renderRes();}
+function renderAll(){renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderVocab();renderRes();}
 paperOptions();tagOptions();
 document.getElementById("f_date").value=todayISO();
 if(TEACHER){document.body.classList.add("teacher");document.getElementById("teacherBar").hidden=false;document.title="Nico's B1 Season — teacher view";}
