@@ -349,7 +349,10 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .chk.on{background:linear-gradient(135deg,var(--green),var(--green-deep)); border-color:transparent; color:#04170f}
 .chk.on::after{content:"✓"}
 .week-list .wlabel{flex:1; min-width:0; font-size:1rem}
-.week-list .wtag{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.78rem; color:var(--faint); white-space:nowrap}
+.week-list .wtag{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.78rem; color:var(--muted); white-space:nowrap; width:auto; max-width:9.5em; flex:none; padding:4px 20px 4px 8px; border:1px dashed var(--line-strong); border-radius:999px; background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239db0a9' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center; -webkit-appearance:none; appearance:none; cursor:pointer; line-height:1.2}
+.week-list .wtag:hover,.week-list .wtag:focus{border-color:var(--green); color:var(--ink); outline:none}
+.week-list .wtag option{text-transform:none; font-family:var(--body); color:var(--ink); background:var(--surface-2)}
+.week-list .wtag:disabled{border-color:transparent; background-image:none; padding:4px 0; cursor:default; opacity:1; color:var(--faint)}
 .week-list .del{opacity:0; transition:.15s}
 .week-list .wrow:hover .del{opacity:1}
 .sug-add{display:grid; grid-template-columns:1fr .7fr auto; gap:10px; margin-top:14px; align-items:end}
@@ -424,6 +427,12 @@ input,select,textarea{min-width:0; max-width:100%}
   .log-form textarea{min-height:92px}
   .vocab-add .btn,.add-res .btn{justify-self:start}
   .sug-add{grid-template-columns:1fr auto}
+  .week-list .wrow{display:grid; grid-template-columns:auto 1fr auto; column-gap:12px; row-gap:6px; align-items:center}
+  .week-list .chk{grid-row:1/3; grid-column:1}
+  .week-list .wlabel{grid-row:1; grid-column:2}
+  .week-list .wtag{grid-row:2; grid-column:2; justify-self:start; font-size:16px; letter-spacing:.02em; padding:2px 22px 2px 8px; max-width:none}
+  .week-list .wtag:disabled{padding:2px 0}
+  .week-list .del{grid-row:1/3; grid-column:3}
   .sug-add input{grid-column:1/-1}
   /* match log: each result is a small stacked block, no table columns to collide */
   .tbl-wrap{overflow:visible}
@@ -515,7 +524,7 @@ input,select,textarea{min-width:0; max-width:100%}
     <div class="train-grid">
       <div class="card pad">
         <div class="card-head">This week's practice</div>
-        <div class="card-sub">Tick what you did — your choice, your pace</div>
+        <div class="card-sub">Tick what you did. Tap a name to rename it, or its category to change it.</div>
         <div class="week-list" id="weekList" style="margin-top:12px"></div>
         <div class="sug-add">
           <input type="text" id="sugText" placeholder="Add a suggestion… (e.g. 15 min of writing)">
@@ -880,10 +889,11 @@ function renderWeek(){
   if(!S.suggestions.length)l.innerHTML='<div class="empty">No suggestions yet — add one below.</div>';
   S.suggestions.forEach(s=>{
     const on=!!done[s.id];const row=document.createElement("div");row.className="wrow";
-    row.innerHTML=`<div class="chk ${on?'on':''}" data-tick="${s.id}"></div><div class="wlabel" data-rename="${s.id}">${esc(s.text)}</div><span class="wtag">${esc(s.tag||'')}</span><button class="del" data-sdel="${s.id}">✕</button>`;
+    row.innerHTML=`<div class="chk ${on?'on':''}" data-tick="${s.id}"></div><div class="wlabel" data-rename="${s.id}">${esc(s.text)}</div><select class="wtag" data-stag="${s.id}" aria-label="Category" ${TEACHER?'disabled':''}>${(TAGS.includes(s.tag)||!s.tag?TAGS:[s.tag,...TAGS]).map(t=>`<option${t===s.tag?' selected':''}>${esc(t)}</option>`).join("")}</select><button class="del" data-sdel="${s.id}">✕</button>`;
     l.appendChild(row);
   });
   l.querySelectorAll("[data-tick]").forEach(c=>c.onclick=()=>{const id=c.dataset.tick;S.habits[today]=S.habits[today]||{};if(S.habits[today][id])delete S.habits[today][id];else S.habits[today][id]=true;if(!Object.keys(S.habits[today]).length)delete S.habits[today];save();renderWeek();renderHeatmap();});
+  l.querySelectorAll("[data-stag]").forEach(sel=>sel.onchange=()=>{const sg=S.suggestions.find(x=>x.id===sel.dataset.stag);if(!sg)return;sg.tag=sel.value;save();renderWeek();});
   l.querySelectorAll("[data-sdel]").forEach(b=>b.onclick=()=>{const sg=S.suggestions.find(x=>x.id===b.dataset.sdel);if(!sg||!confirm(`Remove "${sg.text}" from the list?`))return;S.suggestions=S.suggestions.filter(x=>x.id!==sg.id);save();renderWeek();renderHeatmap();});
   l.querySelectorAll("[data-rename]").forEach(el=>el.onclick=()=>{const s=S.suggestions.find(x=>x.id===el.dataset.rename);const v=prompt("Edit suggestion:",s.text);if(v&&v.trim()){s.text=v.trim();save();renderWeek();}});
 }
