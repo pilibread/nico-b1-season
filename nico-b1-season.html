@@ -641,7 +641,7 @@ const PAPERS={
   listening:{label:"Listening",max:25},
   reading:{label:"Reading",max:32},
   writing:{label:"Writing",max:40},
-  speaking:{label:"Speaking",max:100}
+  speaking:{label:"Speaking",max:20}
 };
 const TAGS=["Reading","Listening","Writing","Speaking","Vocabulary","Grammar","General"];
 const DEFAULT_SUG=[
@@ -726,7 +726,7 @@ function normalize(d){
       if(r&&r.paper!=null&&r.score!=null){out.push(r);return;}
       const base=(r&&r.id)||("mig"+i);
       ["listening","reading","writing"].forEach(pp=>{if(r&&r[pp]!=null&&r[pp]!==""&&!isNaN(r[pp]))out.push({id:base+"-"+pp,date:r.date,paper:pp,score:Number(r[pp]),name:r.name,refl:r.note||"",mock:!!r.mock});});
-      if(r&&r.speak!=null&&r.speak!==""&&!isNaN(r.speak))out.push({id:base+"-speaking",date:r.date,paper:"speaking",score:Number(r.speak),name:r.name,refl:r.note||"",mock:!!r.mock});
+      if(r&&r.speak!=null&&r.speak!==""&&!isNaN(r.speak))out.push({id:base+"-speaking",date:r.date,paper:"speaking",score:Math.round(Number(r.speak)/5),name:r.name,refl:r.note||"",mock:!!r.mock});
     });
     d.results=out;
   }
@@ -808,7 +808,7 @@ document.getElementById("tabbar").addEventListener("click",e=>{
 function latest(skill){const s=S.results.filter(r=>r.paper===skill&&r.score!=null&&r.score!==""&&!isNaN(r.score)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));return s.length?s[s.length-1]:null;}
 function rawVal(skill){const l=latest(skill);return l?Number(l.score):SKILLS[skill].mock;}
 function rating(skill){return Math.round(rawVal(skill)/PAPERS[skill].max*99);}
-function speakRating(){const l=latest("speaking");return l?Math.round(Number(l.score)/100*99):null;}
+function speakRating(){const l=latest("speaking");return l?Math.round(Number(l.score)/PAPERS.speaking.max*99):null;}
 function zoneOf(skill,v){const c=SKILLS[skill];return v>=c.fly?"fly":v>=c.pass?"pass":"below";}
 function tier(ovr){return ovr>=75?"elite":ovr>=65?"gold":ovr>=50?"silver":"bronze";}
 const TIERLAB={elite:"Elite",gold:"Gold",silver:"Silver",bronze:"Bronze"};
