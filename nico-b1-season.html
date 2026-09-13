@@ -321,8 +321,8 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .sync.saving::before{background:var(--warn)}
 .sync.error::before,.sync.offline::before{background:var(--below)}
 .teacher-bar{background:linear-gradient(90deg,var(--gold),var(--gold-deep)); color:var(--bg); font-weight:600; font-size:.9rem; text-align:center; padding:8px 20px}
-.teacher .log-form,.teacher #addResult,.teacher .addbar,.teacher .vocab-add,.teacher .practice-bar,.teacher .refl-form,.teacher #addRefl,.teacher .add-res,.teacher .backup,.teacher .del:not([data-hwdel]):not([data-pbtip]):not([data-pbsec]){display:none!important}
-.teacher .hcell,.teacher .hday,.teacher .chip,.teacher .hedit{pointer-events:none}
+.teacher .log-form,.teacher #addResult,.teacher .vocab-add,.teacher .practice-bar,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
+.teacher .chk,.teacher .chip,.teacher .wlabel{pointer-events:none}
 
 @media (max-width:860px){
   .grid2{grid-template-columns:1fr}
@@ -334,6 +334,41 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
   .refl-form{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important; scroll-behavior:auto!important}}
+/* ---- per-paper match log ---- */
+.log-form{display:grid; grid-template-columns:1fr .8fr 1fr; gap:12px; align-items:end}
+.log-form .full{grid-column:1/-1}
+.paperbadge{font-family:var(--disp); font-weight:800; letter-spacing:.03em; text-transform:uppercase; font-size:.9rem}
+.pb-listening{color:var(--warn)} .pb-reading{color:var(--below)} .pb-writing{color:var(--gold)} .pb-speaking{color:var(--green)}
+.scorecell{font-family:var(--disp); font-weight:800; font-size:1.05rem}
+.refl-line{color:var(--muted); font-size:.85rem; font-style:italic; margin-top:4px}
+/* ---- training: suggestions + consistency + reflection ---- */
+.train-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:start}
+.card-head{font-family:var(--disp); font-weight:800; text-transform:uppercase; letter-spacing:.04em; font-size:1.15rem}
+.card-sub{color:var(--muted); font-size:.85rem; margin-top:2px}
+.week-list .wrow{display:flex; align-items:center; gap:14px; padding:14px 4px; border-bottom:1px solid var(--line)}
+.week-list .wrow:last-child{border-bottom:none}
+.chk{width:26px; height:26px; border-radius:7px; border:2px solid var(--line-strong); cursor:pointer; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-weight:900; transition:.15s}
+.chk:hover{border-color:var(--green)}
+.chk.on{background:linear-gradient(135deg,var(--green),var(--green-deep)); border-color:transparent; color:#04170f}
+.chk.on::after{content:"✓"}
+.week-list .wlabel{flex:1; min-width:0; font-size:1rem}
+.week-list .wtag{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.78rem; color:var(--faint); white-space:nowrap}
+.week-list .del{opacity:0; transition:.15s}
+.week-list .wrow:hover .del{opacity:1}
+.sug-add{display:grid; grid-template-columns:1fr .7fr auto; gap:10px; margin-top:14px; align-items:end}
+.consist-head{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px}
+.cstreak{font-family:var(--disp); font-weight:900; font-size:1.9rem}
+.hm-head{display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:8px}
+.hm-head span{text-align:center; font-family:var(--disp); font-weight:700; color:var(--muted); font-size:.8rem}
+.hm-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px}
+.hm-cell{aspect-ratio:1; border-radius:8px; background:var(--surface-3); border:1px solid var(--line)}
+.hm-cell.l1{background:#1f5b47} .hm-cell.l2{background:#1f9268} .hm-cell.l3{background:var(--green)}
+.hm-cell.today{border:2px solid var(--gold)}
+.hm-legend{display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:12px; font-size:.78rem; color:var(--muted)}
+.hm-legend i{width:16px; height:16px; border-radius:5px; display:inline-block; border:1px solid var(--line)}
+.daynote{border:1px dashed var(--line-strong); background:var(--surface-2); border-radius:10px; padding:12px 14px; width:100%; font-family:inherit; color:var(--ink); resize:vertical; min-height:48px; font-size:.95rem; line-height:1.5}
+.savedtick{color:var(--green); font-size:.8rem; margin-left:8px}
+@media (max-width:860px){ .train-grid{grid-template-columns:1fr} .log-form{grid-template-columns:1fr 1fr} .sug-add{grid-template-columns:1fr 1fr} }
 </style>
 
 <header class="top"><div class="wrap tb">
@@ -348,17 +383,13 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
     </div>
   </div>
 </div></header>
-<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except Homework and Playbook.</div>
+<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only.</div>
 
 <nav class="tabs"><div class="wrap" id="tabbar">
   <button class="tab active" data-tab="overview">Player Card</button>
-  <button class="tab" data-tab="plan">Season Plan</button>
   <button class="tab" data-tab="log">Match Log</button>
   <button class="tab" data-tab="training">Training</button>
-  <button class="tab" data-tab="homework">Homework<span class="badge" id="hwBadge" hidden></span></button>
   <button class="tab" data-tab="vocab">Vocabulary<span class="badge" id="vBadge" hidden></span></button>
-  <button class="tab" data-tab="review">Post-Match</button>
-  <button class="tab" data-tab="playbook">Playbook</button>
   <button class="tab" data-tab="practice">Practice</button>
 </div></nav>
 
@@ -385,86 +416,56 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
     </div>
   </section>
 
-  <!-- PLAN -->
-  <section class="panel" data-panel="plan" hidden>
-    <div class="eyebrow">The road to the exam</div>
-    <h2 class="sec-title">Season plan</h2>
-    <p class="sec-desc">Three phases. Reading and vocabulary come first — that's the biggest gap, and stronger vocabulary lifts listening and writing at the same time.</p>
-    <div class="phases">
-      <div class="phase"><span class="ph-n">Phase 1 · Pre-season</span><h3>Rebuild the base</h3><div class="when">Sept – Dec 2026</div>
-        <ul><li>Learn the shape of each paper (parts, question types, timing).</li><li>Daily vocabulary: build the word bank, review little and often.</li><li>Reading: skim first, then underline only the key information.</li><li>Listening: predict before you hear; learn signpost words.</li><li>One part at a time — accuracy before speed.</li></ul>
-        <div class="checkpoint"><span class="cp-lab">Checkpoint mock · mid-Dec</span>Reading ≥ 12/32 · Listening ≥ 13/25 · Writing ≥ 27/40</div>
-        <div class="reward">🎯 Hit two of three → you pick the next film in English.</div></div>
-      <div class="phase"><span class="ph-n">Phase 2 · Mid-season</span><h3>Build accuracy</h3><div class="when">Jan – Mar 2027</div>
-        <ul><li>Full papers, relaxed timing, then review every wrong answer.</li><li>Listening at real speed: spot the traps, don't match word-for-word.</li><li>Writing: richer vocabulary, natural expressions, ~100 words.</li><li>Start Speaking: Parts 1–4 with a partner.</li><li>Fill the Post-Match log after each test.</li></ul>
-        <div class="checkpoint"><span class="cp-lab">Checkpoint mock · late Mar</span>Reading ≥ 18/32 · Listening ≥ 16/25 · Writing ≥ 31/40</div>
-        <div class="reward">🎯 Reach the pass zone in all three → celebration of your choice.</div></div>
-      <div class="phase"><span class="ph-n">Phase 3 · Finals</span><h3>Sharpen for the whistle</h3><div class="when">Apr – exam 2027</div>
-        <ul><li>Full timed mocks under exam conditions.</li><li>Re-read the error log — close the repeating mistakes.</li><li>Polish Speaking and Writing to sound natural and detailed.</li><li>Light, steady revision — arrive rested and confident.</li></ul>
-        <div class="checkpoint"><span class="cp-lab">Flying-colours target</span>Reading ≥ 24/32 · Listening ≥ 19/25 · Writing ≥ 32/40</div>
-        <div class="reward">🎯 Whistle blows — whatever the score, you turned up ready.</div></div>
-    </div>
-  </section>
-
   <!-- LOG -->
   <section class="panel" data-panel="log" hidden>
     <div class="eyebrow">Every result counts</div>
     <h2 class="sec-title">Match log</h2>
-    <p class="sec-desc">Add each practice test. Your player card and the target bars update from your latest scores.</p>
+    <p class="sec-desc">Log each paper on its own, with a note on how it went. Your player card and the target bars update from your latest score in each paper.</p>
     <div class="card pad">
       <div class="log-form">
-        <label class="fld">Test name<input type="text" id="f_name" placeholder="e.g. Test-English Exam 2"></label>
+        <label class="fld">Paper<select id="f_paper"></select></label>
+        <label class="fld"><span id="f_scoreLab">Score</span><input type="number" id="f_score" min="0" placeholder="score"></label>
         <label class="fld">Date<input type="date" id="f_date"></label>
-        <label class="fld">Listening /25<input type="number" id="f_list" min="0" max="25"></label>
-        <label class="fld">Reading /32<input type="number" id="f_read" min="0" max="32"></label>
-        <label class="fld">Writing /40<input type="number" id="f_write" min="0" max="40"></label>
-        <label class="fld">Speaking /100<input type="number" id="f_speak" min="0" max="100" placeholder="optional"></label>
-        <label class="fld full">Note (optional)<input type="text" id="f_note" placeholder="What kind of test? How did it feel?"></label>
+        <label class="fld">Test name (optional)<input type="text" id="f_name" placeholder="e.g. Test-English Exam 2"></label>
+        <label class="fld full">How it went / what to fix (optional)<textarea id="f_refl" placeholder="e.g. I didn't know the words in the options, so I guessed. Next: add option-words I miss to the vocabulary bank."></textarea></label>
       </div>
-      <div style="margin-top:14px"><button class="btn" id="addResult">Add result</button></div>
+      <div style="margin-top:14px"><button class="btn" id="addResult">Log this paper</button></div>
       <div class="tbl-wrap"><table id="logTable"></table></div>
     </div>
   </section>
 
-  <!-- TRAINING (habits) -->
+  <!-- TRAINING -->
   <section class="panel" data-panel="training" hidden>
     <div class="eyebrow">Little and often</div>
-    <h2 class="sec-title">Training week</h2>
-    <p class="sec-desc">Tick each day you train. The streak counts days in a row with at least one tick. Edit the habits below to match what you're working on — click a habit's name to rename it, use ✕ to remove, or add a new one.</p>
-    <div class="card pad">
-      <div class="habit-top">
-        <div class="streaks">
-          <div class="streak"><b id="streakN">0</b><span>day streak</span></div>
-          <div class="streak"><b id="weekN">0</b><span>ticks this week</span></div>
+    <h2 class="sec-title">Training</h2>
+    <p class="sec-desc">Tick what you practised today — your choice, your pace. The calendar fills in and the streak grows the more days you show up. Edit the suggestions to match what you're working on.</p>
+    <div class="train-grid">
+      <div class="card pad">
+        <div class="card-head">This week's practice</div>
+        <div class="card-sub">Tick what you did — your choice, your pace</div>
+        <div class="week-list" id="weekList" style="margin-top:12px"></div>
+        <div class="sug-add">
+          <input type="text" id="sugText" placeholder="Add a suggestion… (e.g. 15 min of writing)">
+          <select id="sugTag"></select>
+          <button class="btn sm" id="addSug">Add</button>
         </div>
-        <div style="display:flex; gap:8px; align-items:center">
-          <button class="btn ghost sm" id="weekPrev">←</button>
-          <span id="weekLabel" style="font-family:var(--disp); font-weight:700; min-width:150px; text-align:center"></span>
-          <button class="btn ghost sm" id="weekNext">→</button>
+      </div>
+      <div>
+        <div class="card pad">
+          <div class="consist-head">
+            <div class="card-head">Consistency</div>
+            <div class="cstreak"><span id="streakN">0</span>-day streak 🔥</div>
+          </div>
+          <div class="hm-head"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="hm-grid" id="hmGrid"></div>
+          <div class="hm-legend">Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
+        </div>
+        <div class="card pad" style="margin-top:20px">
+          <div class="card-head">Quick reflection</div>
+          <div class="card-sub">One line, only if you want to<span class="savedtick" id="noteSaved" hidden>saved ✓</span></div>
+          <textarea class="daynote" id="dayNote" style="margin-top:12px" placeholder="How did practice feel today?"></textarea>
         </div>
       </div>
-      <div class="habit-grid"><table class="hg" id="habitTable"></table></div>
-      <div class="habit-cards" id="habitCards"></div>
-      <div class="addbar">
-        <input type="text" id="newHabit" placeholder="Add a new habit… (e.g. 15 min of writing)">
-        <button class="btn sm" id="addHabit">Add habit</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOMEWORK -->
-  <section class="panel" data-panel="homework" hidden>
-    <div class="eyebrow">Set by the teacher</div>
-    <h2 class="sec-title">Homework</h2>
-    <p class="sec-desc">Assignments and their due dates. Tick them off as they're done — overdue and due-soon tasks are flagged.</p>
-    <div class="card pad">
-      <div class="hw-form">
-        <label class="fld">Task<input type="text" id="hw_title" placeholder="e.g. Reading Part 4 + 10 new words"></label>
-        <label class="fld">Due<input type="date" id="hw_due"></label>
-        <label class="fld">Note (optional)<input type="text" id="hw_note" placeholder="from which book / site"></label>
-        <button class="btn" id="addHw">Add</button>
-      </div>
-      <div class="hw-list" id="hwList"></div>
     </div>
   </section>
 
@@ -488,35 +489,6 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
       </div>
       <div id="trainArea"></div>
       <div class="vlist" id="vlist"></div>
-    </div>
-  </section>
-
-  <!-- REVIEW -->
-  <section class="panel" data-panel="review" hidden>
-    <div class="eyebrow">Learn from the tape</div>
-    <h2 class="sec-title">Post-match review</h2>
-    <p class="sec-desc">After a test, note what tripped you up and one thing to do differently. Mistakes become a checklist instead of a worry.</p>
-    <div class="card pad">
-      <div class="refl-form">
-        <label class="fld">Paper<select id="r_paper"><option>Reading</option><option>Listening</option><option>Writing</option><option>Speaking</option><option>Vocabulary</option></select></label>
-        <label class="fld">Date<input type="date" id="r_date"></label>
-        <label class="fld full">What went wrong<textarea id="r_wrong" placeholder="e.g. I didn't know the words in the options, so I guessed."></textarea></label>
-        <label class="fld full">What I'll do differently<textarea id="r_fix" placeholder="e.g. Add option-words I miss to the vocabulary bank."></textarea></label>
-      </div>
-      <div style="margin-top:12px"><button class="btn" id="addRefl">Add review</button></div>
-      <div class="refl-list" id="reflList"></div>
-    </div>
-  </section>
-
-  <!-- PLAYBOOK -->
-  <section class="panel" data-panel="playbook" hidden>
-    <div class="eyebrow">The tactics</div>
-    <h2 class="sec-title">Playbook</h2>
-    <p class="sec-desc">Quick reminders for each paper — the moves that make the difference. Open one before you practise that skill. Click a tip to reword it, use ✕ to remove it, and add new ones as you learn what works.</p>
-    <div class="strat" id="pbArea"></div>
-    <div class="pb-add">
-      <input type="text" id="newSection" placeholder="Add a section… (e.g. 🔤 Vocabulary)">
-      <button class="btn sm" id="addSection">Add section</button>
     </div>
   </section>
 
@@ -573,6 +545,20 @@ const SKILLS={
   reading:{label:"Reading",abbr:"REA",max:32,mock:5,pass:19,fly:24},
   writing:{label:"Writing",abbr:"WRI",max:40,mock:23,pass:27,fly:32}
 };
+const PAPERS={
+  listening:{label:"Listening",max:25},
+  reading:{label:"Reading",max:32},
+  writing:{label:"Writing",max:40},
+  speaking:{label:"Speaking",max:100}
+};
+const TAGS=["Reading","Listening","Writing","Speaking","Vocabulary","Grammar","General"];
+const DEFAULT_SUG=[
+  {id:"s1",text:"Vocab flashcard revision",tag:"Vocabulary"},
+  {id:"s2",text:"One reading text — underline key info",tag:"Reading"},
+  {id:"s3",text:"10 minutes of listening",tag:"Listening"},
+  {id:"s4",text:"Record yourself answering a question",tag:"Speaking"},
+  {id:"s5",text:"A practice-test activity",tag:"General"}
+];
 const CURATED=[
   {skill:"all",name:"Cambridge official – B1 Preliminary prep",desc:"Sample papers & candidate guides from the exam board.",meta:"cambridgeenglish.org",url:"https://www.cambridgeenglish.org/exams-and-tests/qualifications/preliminary/preparation/"},
   {skill:"all",name:"Test-English – B1 Preliminary exams",desc:"Full practice tests, split by paper, with answers.",meta:"test-english.com",url:"https://test-english.com/exams/b1-preliminary/"},
@@ -635,15 +621,29 @@ let S=load();
 function normalize(d){
   if(!d||typeof d!=="object") d={};
   d.examDate=d.examDate||DEFAULT_EXAM;
-  d.results=d.results||[{id:"mock",date:"2026-06-26",name:"June mock",listening:9,reading:5,writing:23,speak:"",note:"Starting point",mock:true}];
+  // results are one-paper-per-entry; migrate any older all-in-one rows
+  if(!d.results){
+    d.results=[
+      {id:"mockL",date:"2026-06-26",paper:"listening",score:9,name:"June mock",mock:true},
+      {id:"mockR",date:"2026-06-26",paper:"reading",score:5,name:"June mock",mock:true},
+      {id:"mockW",date:"2026-06-26",paper:"writing",score:23,name:"June mock",mock:true}
+    ];
+  }else{
+    const out=[];
+    d.results.forEach((r,i)=>{
+      if(r&&r.paper!=null&&r.score!=null){out.push(r);return;}
+      const base=(r&&r.id)||("mig"+i);
+      ["listening","reading","writing"].forEach(pp=>{if(r&&r[pp]!=null&&r[pp]!==""&&!isNaN(r[pp]))out.push({id:base+"-"+pp,date:r.date,paper:pp,score:Number(r[pp]),name:r.name,refl:r.note||"",mock:!!r.mock});});
+      if(r&&r.speak!=null&&r.speak!==""&&!isNaN(r.speak))out.push({id:base+"-speaking",date:r.date,paper:"speaking",score:Number(r.speak),name:r.name,refl:r.note||"",mock:!!r.mock});
+    });
+    d.results=out;
+  }
   d.habits=d.habits||{};
-  d.habitDefs=d.habitDefs||DEFAULT_HABITS.map(h=>({...h}));
-  d.homework=d.homework||[];
+  d.suggestions=d.suggestions||(Array.isArray(d.habitDefs)?d.habitDefs.map(h=>({id:h.id,text:h.text,tag:"General"})):DEFAULT_SUG.map(s=>({...s})));
+  d.dayNotes=d.dayNotes||{};
   d.vocab=d.vocab||[];
-  d.reflections=d.reflections||[];
   d.resources=d.resources||[];
   d.settings=d.settings||{};
-  d.playbook=d.playbook||DEFAULT_PLAYBOOK.map(sec=>({...sec,tips:sec.tips.map(t=>({...t}))}));
   return d;
 }
 function load(){
@@ -713,10 +713,10 @@ document.getElementById("tabbar").addEventListener("click",e=>{
 });
 
 /* ----- scores/ratings ----- */
-function latest(skill){const s=S.results.filter(r=>r[skill]!=null&&r[skill]!==""&&!isNaN(r[skill]));return s.length?s[s.length-1]:null;}
-function rawVal(skill){const l=latest(skill);return l?Number(l[skill]):SKILLS[skill].mock;}
-function rating(skill){return Math.round(rawVal(skill)/SKILLS[skill].max*99);}
-function speakRating(){const s=S.results.filter(r=>r.speak!=null&&r.speak!==""&&!isNaN(r.speak));return s.length?Math.round(Number(s[s.length-1].speak)*0.99):null;}
+function latest(skill){const s=S.results.filter(r=>r.paper===skill&&r.score!=null&&r.score!==""&&!isNaN(r.score)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));return s.length?s[s.length-1]:null;}
+function rawVal(skill){const l=latest(skill);return l?Number(l.score):SKILLS[skill].mock;}
+function rating(skill){return Math.round(rawVal(skill)/PAPERS[skill].max*99);}
+function speakRating(){const l=latest("speaking");return l?Math.round(Number(l.score)/100*99):null;}
 function zoneOf(skill,v){const c=SKILLS[skill];return v>=c.fly?"fly":v>=c.pass?"pass":"below";}
 function tier(ovr){return ovr>=75?"elite":ovr>=65?"gold":ovr>=50?"silver":"bronze";}
 const TIERLAB={elite:"Elite",gold:"Gold",silver:"Silver",bronze:"Bronze"};
@@ -771,92 +771,57 @@ function renderGoals(){
 }
 
 /* ----- log ----- */
+function paperOptions(){document.getElementById("f_paper").innerHTML=Object.keys(PAPERS).map(k=>`<option value="${k}">${PAPERS[k].label} (/${PAPERS[k].max})</option>`).join("");updateScoreLab();}
+function updateScoreLab(){const k=document.getElementById("f_paper").value,m=PAPERS[k].max;document.getElementById("f_scoreLab").textContent="Score /"+m;const inp=document.getElementById("f_score");inp.max=m;inp.placeholder="0–"+m;}
 function renderLog(){
   const t=document.getElementById("logTable");
-  const rows=S.results.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  t.innerHTML=`<thead><tr><th>Date</th><th>Test</th><th class="num">LIS/25</th><th class="num">REA/32</th><th class="num">WRI/40</th><th class="num">SPE</th><th></th></tr></thead><tbody>`+
-    rows.map(r=>`<tr class="${r.mock?'mock':''}"><td>${esc(r.date)}</td><td>${esc(r.name)} ${r.mock?'<span class="tag">mock</span>':''}${r.note?'<div style="font-size:.8rem;color:var(--muted)">'+esc(r.note)+'</div>':''}</td><td class="num">${r.listening??'—'}</td><td class="num">${r.reading??'—'}</td><td class="num">${r.writing??'—'}</td><td class="num">${(r.speak===''||r.speak==null)?'—':esc(r.speak)}</td><td>${r.mock?'':'<button class="del" data-del="'+r.id+'">✕</button>'}</td></tr>`).join("")+`</tbody>`;
+  const rows=S.results.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  t.innerHTML=`<thead><tr><th>Date</th><th>Paper</th><th class="num">Score</th><th>Test &amp; notes</th><th></th></tr></thead><tbody>`+
+    rows.map(r=>{const mx=PAPERS[r.paper]?PAPERS[r.paper].max:"";return `<tr class="${r.mock?'mock':''}"><td>${esc(r.date)}</td><td><span class="paperbadge pb-${r.paper}">${PAPERS[r.paper]?PAPERS[r.paper].label:esc(r.paper)}</span></td><td class="num"><span class="scorecell">${r.score}</span>/${mx}</td><td>${esc(r.name||'')||'<span style="color:var(--faint)">—</span>'} ${r.mock?'<span class="tag">mock</span>':''}${r.refl?'<div class="refl-line">'+esc(r.refl)+'</div>':''}</td><td>${r.mock?'':'<button class="del" data-del="'+r.id+'">✕</button>'}</td></tr>`;}).join("")+`</tbody>`;
   t.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.results=S.results.filter(x=>x.id!==b.dataset.del);save();refreshScores();});
 }
-const numOrNull=v=>{v=(v||"").trim();if(v==="")return null;const n=Number(v);return isNaN(n)?null:n;};
+document.getElementById("f_paper").addEventListener("change",updateScoreLab);
 document.getElementById("addResult").onclick=()=>{
-  const r={id:uid(),name:document.getElementById("f_name").value.trim()||"Practice test",date:document.getElementById("f_date").value||todayISO(),
-    listening:numOrNull(document.getElementById("f_list").value),reading:numOrNull(document.getElementById("f_read").value),
-    writing:numOrNull(document.getElementById("f_write").value),speak:document.getElementById("f_speak").value.trim(),note:document.getElementById("f_note").value.trim()};
-  S.results.push(r);save();["f_name","f_list","f_read","f_write","f_speak","f_note"].forEach(id=>document.getElementById(id).value="");refreshScores();
+  const paper=document.getElementById("f_paper").value,sv=document.getElementById("f_score").value.trim();
+  if(sv===""||isNaN(Number(sv))){document.getElementById("f_score").focus();return;}
+  S.results.push({id:uid(),paper,score:Number(sv),date:document.getElementById("f_date").value||todayISO(),name:document.getElementById("f_name").value.trim(),refl:document.getElementById("f_refl").value.trim()});
+  save();["f_score","f_name","f_refl"].forEach(id=>document.getElementById(id).value="");refreshScores();
 };
 function refreshScores(){renderCard();renderGoals();renderLog();}
 
-/* ----- habits ----- */
-let weekOffset=0;
-function mondayOf(o){const d=new Date(todayISO());const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+o*7);return d;}
-function toggleHabit(k,hid){S.habits[k]=S.habits[k]||{};if(S.habits[k][hid])delete S.habits[k][hid];else S.habits[k][hid]=true;if(!Object.keys(S.habits[k]).length)delete S.habits[k];save();renderHabits();}
-function removeHabit(hid){S.habitDefs=S.habitDefs.filter(x=>x.id!==hid);save();renderHabits();}
-function renameHabit(hid){const hb=S.habitDefs.find(x=>x.id===hid);const v=prompt("Rename habit:",hb.text);if(v&&v.trim()){hb.text=v.trim();save();renderHabits();}}
-function renderHabits(){
-  const mon=mondayOf(weekOffset),iso=d=>d.toISOString().slice(0,10),today=todayISO();
-  const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
-  const dn=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  document.getElementById("weekLabel").textContent=days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'})+" – "+days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-  const state=(d,hb)=>{const k=iso(d);return {k,on:S.habits[k]&&S.habits[k][hb.id],future:k>today};};
-  // wide screens: the week as a table
-  let h=`<thead><tr><th class="hname">Habit</th>`+days.map((d,i)=>`<th class="${iso(d)===today?'today':''}">${dn[i]}<br><span style="font-family:var(--body);font-weight:400">${d.getDate()}</span></th>`).join("")+`</tr></thead><tbody>`;
-  if(!S.habitDefs.length) h+=`<tr><td class="hname" colspan="8"><span class="empty">No habits yet — add one below.</span></td></tr>`;
-  S.habitDefs.forEach(hb=>{
-    h+=`<tr><td class="hname"><span class="hedit" data-hid="${hb.id}">${esc(hb.text)}</span><button class="del" data-hdel="${hb.id}" title="Remove">✕</button></td>`+
-      days.map(d=>{const {k,on,future}=state(d,hb);return `<td><div class="hcell ${on?'on':''} ${future?'future':''}" data-d="${k}" data-h="${hb.id}"></div></td>`;}).join("")+`</tr>`;
+/* ----- training: suggestions + consistency + note ----- */
+function tagOptions(){document.getElementById("sugTag").innerHTML=TAGS.map(t=>`<option>${t}</option>`).join("");}
+function renderWeek(){
+  const today=todayISO(),done=S.habits[today]||{};
+  const l=document.getElementById("weekList");l.innerHTML="";
+  if(!S.suggestions.length)l.innerHTML='<div class="empty">No suggestions yet — add one below.</div>';
+  S.suggestions.forEach(s=>{
+    const on=!!done[s.id];const row=document.createElement("div");row.className="wrow";
+    row.innerHTML=`<div class="chk ${on?'on':''}" data-tick="${s.id}"></div><div class="wlabel" data-rename="${s.id}">${esc(s.text)}</div><span class="wtag">${esc(s.tag||'')}</span><button class="del" data-sdel="${s.id}">✕</button>`;
+    l.appendChild(row);
   });
-  h+=`</tbody>`;
-  const t=document.getElementById("habitTable");t.innerHTML=h;
-  // narrow screens: one card per habit, seven day buttons
-  const cards=document.getElementById("habitCards");
-  cards.innerHTML=S.habitDefs.length?S.habitDefs.map(hb=>`<div class="hcard"><div class="hc-top"><span class="hedit" data-hid="${hb.id}">${esc(hb.text)}</span><button class="del" data-hdel="${hb.id}" title="Remove">✕</button></div><div class="hdays">`+
-    days.map((d,i)=>{const {k,on,future}=state(d,hb);return `<div class="hday ${on?'on':''} ${k===today?'today':''} ${future?'future':''}" data-d="${k}" data-h="${hb.id}">${dn[i].slice(0,2)}<small>${d.getDate()}</small></div>`;}).join("")+`</div></div>`).join(""):'<div class="empty">No habits yet — add one below.</div>';
-  [t,cards].forEach(root=>{
-    root.querySelectorAll(".hcell:not(.future),.hday:not(.future)").forEach(c=>c.onclick=()=>toggleHabit(c.dataset.d,c.dataset.h));
-    root.querySelectorAll("[data-hdel]").forEach(b=>b.onclick=()=>removeHabit(b.dataset.hdel));
-    root.querySelectorAll(".hedit").forEach(e=>e.onclick=()=>renameHabit(e.dataset.hid));
-  });
-  // streak: consecutive days with any tick
+  l.querySelectorAll("[data-tick]").forEach(c=>c.onclick=()=>{const id=c.dataset.tick;S.habits[today]=S.habits[today]||{};if(S.habits[today][id])delete S.habits[today][id];else S.habits[today][id]=true;if(!Object.keys(S.habits[today]).length)delete S.habits[today];save();renderWeek();renderHeatmap();});
+  l.querySelectorAll("[data-sdel]").forEach(b=>b.onclick=()=>{S.suggestions=S.suggestions.filter(x=>x.id!==b.dataset.sdel);save();renderWeek();});
+  l.querySelectorAll("[data-rename]").forEach(el=>el.onclick=()=>{const s=S.suggestions.find(x=>x.id===el.dataset.rename);const v=prompt("Edit suggestion:",s.text);if(v&&v.trim()){s.text=v.trim();save();renderWeek();}});
+}
+document.getElementById("addSug").onclick=()=>{const i=document.getElementById("sugText"),v=i.value.trim();if(!v)return;S.suggestions.push({id:uid(),text:v,tag:document.getElementById("sugTag").value});i.value="";save();renderWeek();};
+document.getElementById("sugText").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addSug").click();});
+function renderHeatmap(){
+  const WEEKS=5,today=todayISO(),iso=d=>d.toISOString().slice(0,10);
+  const base=new Date(today);const day=(base.getDay()+6)%7;base.setDate(base.getDate()-day-7*(WEEKS-1));
+  const grid=document.getElementById("hmGrid");grid.innerHTML="";
+  for(let i=0;i<WEEKS*7;i++){const d=new Date(base);d.setDate(base.getDate()+i);const k=iso(d);
+    const cnt=S.habits[k]?Object.keys(S.habits[k]).length:0;const lvl=cnt===0?0:cnt===1?1:cnt===2?2:3;
+    const cell=document.createElement("div");cell.className="hm-cell l"+lvl+(k===today?" today":"");if(k>today)cell.style.opacity=".3";
+    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+(cnt?` · ${cnt} done`:"");grid.appendChild(cell);}
   let streak=0,d=new Date(today);while(true){const k=d.toISOString().slice(0,10);if(S.habits[k]&&Object.keys(S.habits[k]).length){streak++;d.setDate(d.getDate()-1);}else break;}
   document.getElementById("streakN").textContent=streak;
-  let wc=0;days.forEach(dd=>{const k=iso(dd);if(S.habits[k])wc+=Object.keys(S.habits[k]).length;});
-  document.getElementById("weekN").textContent=wc;
 }
-document.getElementById("addHabit").onclick=()=>{const i=document.getElementById("newHabit");const v=i.value.trim();if(!v)return;S.habitDefs.push({id:uid(),text:v});i.value="";save();renderHabits();};
-document.getElementById("newHabit").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addHabit").click();});
-document.getElementById("weekPrev").onclick=()=>{weekOffset--;renderHabits();};
-document.getElementById("weekNext").onclick=()=>{weekOffset++;renderHabits();};
+function renderNote(){document.getElementById("dayNote").value=S.dayNotes[todayISO()]||"";}
+let noteTimer=null;
+document.getElementById("dayNote").addEventListener("input",e=>{const k=todayISO(),v=e.target.value;if(v.trim())S.dayNotes[k]=v;else delete S.dayNotes[k];save();const tick=document.getElementById("noteSaved");tick.hidden=false;clearTimeout(noteTimer);noteTimer=setTimeout(()=>tick.hidden=true,1500);});
 
-/* ----- homework ----- */
-function renderHw(){
-  const l=document.getElementById("hwList");l.innerHTML="";
-  const today=todayISO();
-  const items=S.homework.slice().sort((a,b)=>(a.done-b.done)||((a.due||"9999").localeCompare(b.due||"9999")));
-  if(!items.length)l.innerHTML='<div class="empty">No homework yet. Add the first task.</div>';
-  let openCount=0;
-  items.forEach(hw=>{
-    if(!hw.done)openCount++;
-    let cls="",dp="ok",dtxt="";
-    if(hw.due){const days=Math.ceil((new Date(hw.due)-new Date(today))/86400000);
-      if(!hw.done&&days<0){cls="overdue";dp="over";dtxt=(-days)+"d late";}
-      else if(!hw.done&&days<=3){cls="due-soon";dp="soon";dtxt=days===0?"today":days+"d left";}
-      else{dtxt=new Date(hw.due).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
-    }
-    if(hw.done)cls="done";
-    const el=document.createElement("div");el.className="hw "+cls;
-    el.innerHTML=`<div class="chk" data-tg="${hw.id}">${hw.done?'✓':''}</div>
-      <div class="body"><div class="ti">${esc(hw.title)}</div>${hw.note?'<div class="meta">'+esc(hw.note)+'</div>':''}</div>
-      ${hw.due?'<span class="duep '+dp+'">'+dtxt+'</span>':''}
-      <button class="del" data-hwdel="${hw.id}">✕</button>`;
-    l.appendChild(el);
-  });
-  l.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{const hw=S.homework.find(x=>x.id===b.dataset.tg);hw.done=!hw.done;save();renderHw();});
-  l.querySelectorAll("[data-hwdel]").forEach(b=>b.onclick=()=>{S.homework=S.homework.filter(x=>x.id!==b.dataset.hwdel);save();renderHw();});
-  const badge=document.getElementById("hwBadge");
-  if(openCount){badge.hidden=false;badge.textContent=openCount;const anyOver=S.homework.some(h=>!h.done&&h.due&&h.due<today);badge.classList.toggle("alert",anyOver);}else badge.hidden=true;
-}
-document.getElementById("addHw").onclick=()=>{const t=document.getElementById("hw_title").value.trim();if(!t)return;S.homework.push({id:uid(),title:t,due:document.getElementById("hw_due").value,note:document.getElementById("hw_note").value.trim(),done:false});["hw_title","hw_due","hw_note"].forEach(id=>document.getElementById(id).value="");save();renderHw();};
+
 
 /* ----- vocab list ----- */
 function renderVocab(){
@@ -929,41 +894,9 @@ function showQuiz(){
   document.getElementById("quizNext").onclick=()=>{quizI++;if(quizI>=quizQ.length){const pct=Math.round(quizScore/quizQ.length*100);a.innerHTML='<div class="stage"><div style="text-align:center"><div class="scorebar" style="font-size:2rem">'+quizScore+' / '+quizQ.length+'</div><div style="margin-top:6px;color:var(--muted)">'+pct+'% this round</div><div style="margin-top:12px"><button class="btn sm" id="againQ">Play again</button></div></div></div>';document.getElementById("againQ").onclick=()=>document.getElementById("startQuiz").click();}else showQuiz();};
 }
 
-/* ----- reflections ----- */
-function renderRefl(){
-  const l=document.getElementById("reflList");l.innerHTML="";
-  if(!S.reflections.length)l.innerHTML='<div class="empty">No reviews yet. Add one after your next test.</div>';
-  S.reflections.slice().reverse().forEach(r=>{const el=document.createElement("div");el.className="refl";el.innerHTML=`<button class="del" data-r="${r.id}" style="position:absolute;top:10px;right:12px">✕</button><div class="rh"><span class="pp">${esc(r.paper)}</span><span>${esc(r.date)}</span></div><div>${esc(r.wrong)}</div>${r.fix?'<div class="fix">'+esc(r.fix)+'</div>':''}`;l.appendChild(el);});
-  l.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{S.reflections=S.reflections.filter(x=>x.id!==b.dataset.r);save();renderRefl();});
-}
-document.getElementById("addRefl").onclick=()=>{const w=document.getElementById("r_wrong").value.trim();if(!w)return;S.reflections.push({id:uid(),paper:document.getElementById("r_paper").value,date:document.getElementById("r_date").value||todayISO(),wrong:w,fix:document.getElementById("r_fix").value.trim()});save();document.getElementById("r_wrong").value="";document.getElementById("r_fix").value="";renderRefl();};
 
-/* ----- playbook ----- */
-const pbOpen=new Set([S.playbook[0]&&S.playbook[0].id]);
-function renderPlaybook(){
-  const area=document.getElementById("pbArea");area.innerHTML="";
-  if(!S.playbook.length)area.innerHTML='<div class="empty">No sections yet. Add one below.</div>';
-  S.playbook.forEach(sec=>{
-    const d=document.createElement("details");d.className="scard";d.open=pbOpen.has(sec.id);
-    d.innerHTML=`<summary><span>${esc(sec.title)}${sec.meta?' <span class="paper-tag">· '+esc(sec.meta)+'</span>':''}</span><span class="arw">›</span></summary>
-      <div class="sbody">
-        <ul>${sec.tips.map(t=>`<li><span class="pbtip" data-pbedit="${t.id}" title="Click to edit">${esc(t.text)}</span><button class="del" data-pbtip="${t.id}" title="Remove">✕</button></li>`).join("")}${sec.tips.length?'':'<li class="empty" style="padding:4px 0">No tips yet.</li>'}</ul>
-        <div class="pb-tools"><input type="text" placeholder="Add a tip…" data-pbnew="${sec.id}"><button class="btn sm" data-pbaddtip="${sec.id}">Add</button></div>
-        <div class="pb-meta"><button class="linkbtn" data-pbrename="${sec.id}">Rename section</button><button class="linkbtn" data-pbsec="${sec.id}">Remove section</button></div>
-      </div>`;
-    d.addEventListener("toggle",()=>{if(d.open)pbOpen.add(sec.id);else pbOpen.delete(sec.id);});
-    area.appendChild(d);
-  });
-  const findTip=id=>{for(const sec of S.playbook){const t=sec.tips.find(x=>x.id===id);if(t)return {sec,t};}return null;};
-  area.querySelectorAll("[data-pbedit]").forEach(el=>el.onclick=()=>{const f=findTip(el.dataset.pbedit);if(!f)return;const v=prompt("Edit this tip:",f.t.text);if(v!=null&&v.trim()){f.t.text=v.trim();save();renderPlaybook();}});
-  area.querySelectorAll("[data-pbtip]").forEach(b=>b.onclick=()=>{const f=findTip(b.dataset.pbtip);if(!f)return;f.sec.tips=f.sec.tips.filter(x=>x.id!==f.t.id);save();renderPlaybook();});
-  area.querySelectorAll("[data-pbaddtip]").forEach(b=>b.onclick=()=>{const sec=S.playbook.find(x=>x.id===b.dataset.pbaddtip);const i=area.querySelector(`[data-pbnew="${sec.id}"]`);const v=i.value.trim();if(!v)return;sec.tips.push({id:uid(),text:v});save();renderPlaybook();});
-  area.querySelectorAll("[data-pbnew]").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")area.querySelector(`[data-pbaddtip="${i.dataset.pbnew}"]`).click();}));
-  area.querySelectorAll("[data-pbrename]").forEach(b=>b.onclick=()=>{const sec=S.playbook.find(x=>x.id===b.dataset.pbrename);const v=prompt("Section name:",sec.title);if(v==null||!v.trim())return;sec.title=v.trim();const m=prompt("Small note next to the name (optional):",sec.meta||"");if(m!=null)sec.meta=m.trim();save();renderPlaybook();});
-  area.querySelectorAll("[data-pbsec]").forEach(b=>b.onclick=()=>{const sec=S.playbook.find(x=>x.id===b.dataset.pbsec);if(!confirm(`Remove "${sec.title}" and its ${sec.tips.length} tips?`))return;S.playbook=S.playbook.filter(x=>x.id!==sec.id);save();renderPlaybook();});
-}
-document.getElementById("addSection").onclick=()=>{const i=document.getElementById("newSection");const v=i.value.trim();if(!v)return;const sec={id:uid(),title:v,meta:"",tips:[]};S.playbook.push(sec);pbOpen.add(sec.id);i.value="";save();renderPlaybook();};
-document.getElementById("newSection").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addSection").click();});
+
+
 
 /* ----- resources ----- */
 function renderRes(){
@@ -992,9 +925,9 @@ document.getElementById("showRestore").onclick=()=>{const r=document.getElementB
 document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
-function renderAll(){applyBig();renderCount();renderCard();renderGoals();renderLog();renderHabits();renderHw();renderVocab();renderRefl();renderPlaybook();renderRes();}
+function renderAll(){applyBig();renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderVocab();renderRes();}
+paperOptions();tagOptions();
 document.getElementById("f_date").value=todayISO();
-document.getElementById("r_date").value=todayISO();
 if(TEACHER){document.body.classList.add("teacher");document.getElementById("teacherBar").hidden=false;document.title="Nico's B1 Season — teacher view";}
 renderAll();
 cloudInit();
