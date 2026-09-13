@@ -367,6 +367,29 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .hm-cell.today{border:2px solid var(--gold)}
 .hm-legend{display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:12px; font-size:.78rem; color:var(--muted)}
 .hm-legend i{width:16px; height:16px; border-radius:5px; display:inline-block; border:1px solid var(--line)}
+.hm-cell.open{cursor:pointer}
+.hm-cell.open:hover{outline:2px solid var(--ink); outline-offset:1px}
+.hm-cell.open:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.hm-cell .hm-note{position:absolute; left:5px; bottom:4px; width:6px; height:6px; border-radius:50%; background:var(--gold)}
+.hm-legend{flex-wrap:wrap}
+.hm-hint{order:2; flex-basis:100%; text-align:left; margin-top:4px; color:var(--faint)}
+.hm-hint b{display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--gold); vertical-align:middle; margin:0 2px 2px}
+/* day pop-up */
+.day-pop[hidden]{display:none}
+.day-pop{position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:18px}
+.day-box{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--radius); box-shadow:var(--shadow); width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:20px 20px 22px; position:relative}
+.day-box h3{font-family:var(--disp); font-weight:800; text-transform:uppercase; letter-spacing:.03em; font-size:1.45rem; margin:2px 34px 14px 0}
+.day-close{position:absolute; top:12px; right:12px; width:36px; height:36px; border-radius:50%; background:var(--surface-2); border:1px solid var(--line-strong); color:var(--ink); font-size:1rem; cursor:pointer}
+.day-close:hover{border-color:var(--green)}
+.day-sec{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:.8rem; color:var(--muted); margin:14px 0 6px}
+.day-list{list-style:none; margin:0; padding:0}
+.day-list li{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line)}
+.day-list li:last-child{border-bottom:none}
+.day-list li::before{content:"✓"; flex:none; width:22px; height:22px; border-radius:6px; background:linear-gradient(135deg,var(--green),var(--green-deep)); color:#04170f; font-weight:900; font-size:.8rem; display:flex; align-items:center; justify-content:center}
+.day-list .t{flex:1; min-width:0}
+.day-list .tg{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.72rem; color:var(--faint); white-space:nowrap}
+.day-note{background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:var(--radius-sm); padding:10px 12px; white-space:pre-wrap; overflow-wrap:anywhere}
+.day-none{color:var(--faint); font-style:italic; font-size:.92rem}
 .daynote{border:1px dashed var(--line-strong); background:var(--surface-2); border-radius:10px; padding:12px 14px; width:100%; font-family:inherit; color:var(--ink); resize:vertical; min-height:48px; font-size:.95rem; line-height:1.5}
 .savedtick{color:var(--green); font-size:.8rem; margin-left:8px}
 @media (max-width:860px){ .train-grid{grid-template-columns:1fr} .log-form{grid-template-columns:1fr 1fr} .sug-add{grid-template-columns:1fr 1fr} }
@@ -508,7 +531,7 @@ input,select,textarea{min-width:0; max-width:100%}
           </div>
           <div class="hm-head"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
           <div class="hm-grid" id="hmGrid"></div>
-          <div class="hm-legend">Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
+          <div class="hm-legend"><span class="hm-hint">Tap a day to see what was done · <b></b> = reflection</span>Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
         </div>
         <div class="card pad" style="margin-top:20px">
           <div class="card-head">Quick reflection</div>
@@ -560,6 +583,15 @@ input,select,textarea{min-width:0; max-width:100%}
     </div>
   </section>
 </main>
+
+<div class="day-pop" id="dayPop" hidden>
+  <div class="day-box" role="dialog" aria-modal="true" aria-labelledby="dayTitle">
+    <button class="day-close" id="dayClose" aria-label="Close">✕</button>
+    <div class="eyebrow">Training day</div>
+    <h3 id="dayTitle"></h3>
+    <div id="dayBody"></div>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore-compat.js"></script>
@@ -852,7 +884,7 @@ function renderWeek(){
     l.appendChild(row);
   });
   l.querySelectorAll("[data-tick]").forEach(c=>c.onclick=()=>{const id=c.dataset.tick;S.habits[today]=S.habits[today]||{};if(S.habits[today][id])delete S.habits[today][id];else S.habits[today][id]=true;if(!Object.keys(S.habits[today]).length)delete S.habits[today];save();renderWeek();renderHeatmap();});
-  l.querySelectorAll("[data-sdel]").forEach(b=>b.onclick=()=>{S.suggestions=S.suggestions.filter(x=>x.id!==b.dataset.sdel);save();renderWeek();});
+  l.querySelectorAll("[data-sdel]").forEach(b=>b.onclick=()=>{const sg=S.suggestions.find(x=>x.id===b.dataset.sdel);if(!sg||!confirm(`Remove "${sg.text}" from the list?`))return;S.suggestions=S.suggestions.filter(x=>x.id!==sg.id);save();renderWeek();renderHeatmap();});
   l.querySelectorAll("[data-rename]").forEach(el=>el.onclick=()=>{const s=S.suggestions.find(x=>x.id===el.dataset.rename);const v=prompt("Edit suggestion:",s.text);if(v&&v.trim()){s.text=v.trim();save();renderWeek();}});
 }
 document.getElementById("addSug").onclick=()=>{const i=document.getElementById("sugText"),v=i.value.trim();if(!v)return;S.suggestions.push({id:uid(),text:v,tag:document.getElementById("sugTag").value});i.value="";save();renderWeek();};
@@ -863,14 +895,47 @@ function renderHeatmap(){
   const grid=document.getElementById("hmGrid");grid.innerHTML="";
   for(let i=0;i<WEEKS*7;i++){const d=new Date(base);d.setUTCDate(base.getUTCDate()+i);const k=iso(d);
     const cnt=S.habits[k]?Object.keys(S.habits[k]).length:0;const lvl=cnt===0?0:cnt===1?1:cnt===2?2:3;
-    const cell=document.createElement("div");cell.className="hm-cell l"+lvl+(k===today?" today":"");if(k>today)cell.style.opacity=".3";
-    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})+(cnt?` · ${cnt} done`:"");cell.innerHTML=`<span class="hm-d">${d.getUTCDate()}</span>`;grid.appendChild(cell);}
+    const note=!!(S.dayNotes[k]&&S.dayNotes[k].trim()),open=cnt>0||note;
+    const cell=document.createElement("div");cell.className="hm-cell l"+lvl+(k===today?" today":"")+(open?" open":"");if(k>today)cell.style.opacity=".3";
+    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})+(cnt?` · ${cnt} done`:"")+(note?" · reflection":"");
+    cell.innerHTML=`<span class="hm-d">${d.getUTCDate()}</span>${note?'<span class="hm-note"></span>':''}`;
+    if(open){cell.tabIndex=0;cell.setAttribute("role","button");cell.onclick=()=>openDay(k);cell.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDay(k);}};}
+    grid.appendChild(cell);}
   let streak=0,d=new Date(today);while(true){const k=d.toISOString().slice(0,10);if(S.habits[k]&&Object.keys(S.habits[k]).length){streak++;d.setUTCDate(d.getUTCDate()-1);}else break;}
   document.getElementById("streakN").textContent=streak;
+  if(dayOpen)fillDay(dayOpen);   // keep an open pop-up current when data syncs in
 }
+
+/* ----- day pop-up: what was ticked and the reflection for one calendar day ----- */
+let dayOpen=null,dayOpener=null;
+function fillDay(k){
+  const d=new Date(k);
+  document.getElementById("dayTitle").textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+  const ids=Object.keys(S.habits[k]||{});
+  const items=ids.map(id=>{const sg=S.suggestions.find(x=>x.id===id);return sg?`<li><span class="t">${esc(sg.text)}</span>${sg.tag?`<span class="tg">${esc(sg.tag)}</span>`:""}</li>`:`<li><span class="t day-none">An activity that has since been removed</span></li>`;}).join("");
+  const note=(S.dayNotes[k]||"").trim();
+  document.getElementById("dayBody").innerHTML=
+    `<div class="day-sec">Practised${ids.length?` · ${ids.length}`:""}</div>`+
+    (ids.length?`<ul class="day-list">${items}</ul>`:`<div class="day-none">Nothing ticked this day.</div>`)+
+    `<div class="day-sec">Reflection</div>`+
+    (note?`<div class="day-note">${esc(note)}</div>`:`<div class="day-none">No reflection written.</div>`);
+}
+function openDay(k){
+  dayOpen=k;dayOpener=document.activeElement;fillDay(k);
+  document.getElementById("dayPop").hidden=false;document.body.style.overflow="hidden";
+  document.getElementById("dayClose").focus();
+}
+function closeDay(){
+  if(!dayOpen)return;dayOpen=null;
+  document.getElementById("dayPop").hidden=true;document.body.style.overflow="";
+  if(dayOpener&&dayOpener.isConnected)dayOpener.focus();
+}
+document.getElementById("dayClose").onclick=closeDay;
+document.getElementById("dayPop").addEventListener("click",e=>{if(e.target.id==="dayPop")closeDay();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDay();});
 function renderNote(){document.getElementById("dayNote").value=S.dayNotes[todayISO()]||"";}
 let noteTimer=null;
-document.getElementById("dayNote").addEventListener("input",e=>{const k=todayISO(),v=e.target.value;if(v.trim())S.dayNotes[k]=v;else delete S.dayNotes[k];save();const tick=document.getElementById("noteSaved");tick.hidden=false;clearTimeout(noteTimer);noteTimer=setTimeout(()=>tick.hidden=true,1500);});
+document.getElementById("dayNote").addEventListener("input",e=>{const k=todayISO(),v=e.target.value;const had=!!(S.dayNotes[k]&&S.dayNotes[k].trim());if(v.trim())S.dayNotes[k]=v;else delete S.dayNotes[k];save();if(had!==!!v.trim())renderHeatmap();const tick=document.getElementById("noteSaved");tick.hidden=false;clearTimeout(noteTimer);noteTimer=setTimeout(()=>tick.hidden=true,1500);});
 
 
 
