@@ -226,6 +226,14 @@ tr.mock td{background:var(--surface-2)}
 /* ---------- vocab ---------- */
 .vocab-add{display:grid; grid-template-columns:1fr 1.2fr 1.4fr auto; gap:10px; align-items:end}
 .practice-bar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:16px 0}
+.vimport{margin-top:14px; padding:14px 16px; background:var(--surface-2); border:1px dashed var(--line-strong); border-radius:var(--radius-sm)}
+.vi-head{font-family:var(--disp); font-weight:800; text-transform:uppercase; letter-spacing:.04em; font-size:1rem}
+.vimport p{margin:4px 0 12px}
+.vi-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+label.btn{display:inline-block; cursor:pointer}
+.vimport textarea{margin-top:10px; min-height:110px; font-family:ui-monospace,monospace; font-size:.8rem}
+.vi-ok{color:var(--good)}
+.vi-no{color:var(--below)}
 .vlist{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:8px}
 .vcard{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; position:relative}
 .vcard .w{font-weight:700; font-size:1.05rem}
@@ -318,7 +326,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .sync.saving::before{background:var(--warn)}
 .sync.error::before,.sync.offline::before{background:var(--below)}
 .teacher-bar{background:linear-gradient(90deg,var(--gold),var(--gold-deep)); color:var(--bg); font-weight:600; font-size:.9rem; text-align:center; padding:8px 20px}
-.teacher .log-form,.teacher #addResult,.teacher .vocab-add,.teacher .practice-bar,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
+.teacher .log-form,.teacher #addResult,.teacher .vocab-add,.teacher .vimport,.teacher .practice-bar,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
 .teacher .chk,.teacher .chip,.teacher .wlabel{pointer-events:none}
 
 @media (max-width:860px){
@@ -421,6 +429,7 @@ input,select,textarea{min-width:0; max-width:100%}
   .t-full{display:none} .t-short{display:inline}
   /* 16px text in boxes, so tapping one doesn't zoom the page */
   input[type=text],input[type=number],input[type=date],select,textarea{font-size:16px}
+  .vimport textarea,.backup textarea{font-size:16px}
   /* forms: one field per row */
   .log-form,.vocab-add,.add-res{grid-template-columns:1fr}
   .add-res>*{grid-column:1/-1!important}
@@ -486,13 +495,13 @@ input,select,textarea{min-width:0; max-width:100%}
           <h3>Ratings to unlock</h3>
           <div class="obj-row"><span>Pass zone — a comfortable B1</span><span class="rt" style="color:var(--gold)">≈ 62 OVR</span></div>
           <div class="obj-row"><span>Flying colours — a strong pass</span><span class="rt" style="color:var(--green)">≈ 77 OVR</span></div>
-          <p class="hint" style="margin-top:10px">Rating = your latest score on that paper, out of 99. Beat the mock and the card levels up: bronze → silver → gold.</p>
+          <p class="hint" style="margin-top:10px">Rating = your average score over your last five papers of that kind, out of 99. Keep beating the mock and the card levels up: bronze → silver → gold.</p>
         </div>
       </div>
       <div>
         <div class="eyebrow">The targets</div>
         <h2 class="sec-title">Two lines to beat</h2>
-        <p class="sec-desc">On every practice paper, aim past the <b>pass zone</b> and towards <b>flying colours</b>. The dashed line is the June mock — where the season starts. Log a new test and the bars move.</p>
+        <p class="sec-desc">On every practice paper, aim past the <b>pass zone</b> and towards <b>flying colours</b>. Each bar shows your average over your last five papers of that kind. The dashed line is the June mock — where the season starts. Log a new test and the bars move.</p>
         <div class="card pad" id="goalCard"></div>
       </div>
     </div>
@@ -555,13 +564,27 @@ input,select,textarea{min-width:0; max-width:100%}
   <section class="panel" data-panel="vocab" hidden>
     <div class="eyebrow">Your biggest win</div>
     <h2 class="sec-title">Vocabulary</h2>
-    <p class="sec-desc">Add words you meet, with a short meaning and an example. Mark each <b>New</b>, <b>Review</b> or <b>Known</b>, then train them with flashcards or a quiz.</p>
+    <p class="sec-desc">Add words you meet, with a short meaning and an example — one at a time, or a whole spreadsheet at once. Mark each <b>New</b>, <b>Review</b> or <b>Known</b>, then train them with flashcards or a quiz.</p>
     <div class="card pad">
       <div class="vocab-add">
         <label class="fld">Word / phrase<input type="text" id="v_word" placeholder="give up"></label>
         <label class="fld">Meaning<input type="text" id="v_mean" placeholder="stop trying"></label>
         <label class="fld">Example<input type="text" id="v_ex" placeholder="Don't give up before the exam."></label>
         <button class="btn" id="addVocab">Add</button>
+      </div>
+      <div class="vimport">
+        <div class="vi-head">Add many words from a spreadsheet</div>
+        <p class="hint">One word per row, in three columns: <b>word</b>, <b>meaning</b>, <b>example</b> (the example can be left empty). A first row of column titles is ignored, and words already in the bank are skipped. In Excel or Google Sheets, save or download the sheet as <b>CSV</b> — or just copy the cells and paste them here.</p>
+        <div class="vi-row">
+          <label class="btn ghost sm" for="vocabFile">Choose a CSV file</label>
+          <input type="file" id="vocabFile" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" hidden>
+          <button class="btn ghost sm" id="vocabPasteToggle">Paste cells instead</button>
+          <span class="hint" id="vocabImportMsg"></span>
+        </div>
+        <div id="vocabPasteArea" hidden>
+          <textarea id="vocabPasteBox" placeholder="give up&#9;stop trying&#9;Don't give up before the exam.&#10;on purpose&#9;deliberately&#9;He did it on purpose."></textarea>
+          <div style="margin-top:8px"><button class="btn sm" id="vocabPasteImport">Add these words</button></div>
+        </div>
       </div>
       <div class="practice-bar">
         <button class="btn gold sm" id="startFlash">🃏 Flashcards</button>
@@ -805,10 +828,15 @@ document.getElementById("tabbar").addEventListener("click",e=>{
 });
 
 /* ----- scores/ratings ----- */
-function latest(skill){const s=S.results.filter(r=>r.paper===skill&&r.score!=null&&r.score!==""&&!isNaN(r.score)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));return s.length?s[s.length-1]:null;}
-function rawVal(skill){const l=latest(skill);return l?Number(l.score):SKILLS[skill].mock;}
+/* A paper's mark is the AVERAGE of its last FORM_N logged papers, not the newest one:
+   progress isn't linear, so one bad day (or one lucky day) shouldn't swing the card. */
+const FORM_N=5;
+function recent(skill){return S.results.filter(r=>r.paper===skill&&r.score!=null&&r.score!==""&&!isNaN(r.score)).sort((a,b)=>(a.date||"").localeCompare(b.date||"")).slice(-FORM_N);}
+function avgVal(skill){const s=recent(skill);return s.length?s.reduce((a,r)=>a+Number(r.score),0)/s.length:null;}
+function rawVal(skill){const v=avgVal(skill);return v==null?SKILLS[skill].mock:v;}
 function rating(skill){return Math.round(rawVal(skill)/PAPERS[skill].max*99);}
-function speakRating(){const l=latest("speaking");return l?Math.round(Number(l.score)/PAPERS.speaking.max*99):null;}
+function speakRating(){const v=avgVal("speaking");return v==null?null:Math.round(v/PAPERS.speaking.max*99);}
+const fmtMark=v=>Number(v.toFixed(1)).toString();   // 9.4 stays 9.4, 23.0 shows as 23
 function zoneOf(skill,v){const c=SKILLS[skill];return v>=c.fly?"fly":v>=c.pass?"pass":"below";}
 function tier(ovr){return ovr>=75?"elite":ovr>=65?"gold":ovr>=50?"silver":"bronze";}
 const TIERLAB={elite:"Elite",gold:"Gold",silver:"Silver",bronze:"Bronze"};
@@ -844,11 +872,11 @@ function renderCard(){
 function renderGoals(){
   const wrap=document.getElementById("goalCard"); wrap.innerHTML="";
   Object.keys(SKILLS).forEach(sk=>{
-    const c=SKILLS[sk],val=rawVal(sk),z=zoneOf(sk,val),delta=val-c.mock;
+    const c=SKILLS[sk],val=rawVal(sk),z=zoneOf(sk,val),delta=val-c.mock,n=recent(sk).length;
     const col=z==="fly"?"var(--good)":z==="pass"?"var(--warn)":"var(--below)";
     const p=v=>Math.min(100,Math.max(0,v/c.max*100));
     const g=document.createElement("div");g.className="goal";
-    g.innerHTML=`<div class="r1"><span class="nm">${c.label}</span><span class="now">now <b>${val}/${c.max}</b> ${delta>0?'· <span style="color:var(--good)">+'+delta+'</span>':''}</span></div>
+    g.innerHTML=`<div class="r1"><span class="nm">${c.label}</span><span class="now">${n>1?`last ${n}`:"now"} <b>${fmtMark(val)}/${c.max}</b> ${delta>0?'· <span style="color:var(--good)">+'+fmtMark(delta)+'</span>':''}</span></div>
       <div class="track">
         <div class="fill" style="width:${p(val)}%;background:${col}"></div>
         <div class="mockmark" style="left:${p(c.mock)}%"><span>mock ${c.mock}</span></div>
@@ -858,7 +886,7 @@ function renderGoals(){
     wrap.appendChild(g);
   });
   const n=document.createElement("div");n.className="goal";
-  n.innerHTML=`<p class="note-approx">Raw-mark targets are a working guide, not Cambridge's official conversion (that scaled score isn't published). Roughly 60% of a paper's marks = the pass zone; about 75%+ = a strong pass.</p>`;
+  n.innerHTML=`<p class="note-approx">Each mark is the average of your last ${FORM_N} papers of that kind, so one bad day doesn't sink the card and one lucky day doesn't flatter it. Raw-mark targets are a working guide, not Cambridge's official conversion (that scaled score isn't published). Roughly 60% of a paper's marks = the pass zone; about 75%+ = a strong pass.</p>`;
   wrap.appendChild(n);
 }
 
@@ -965,6 +993,86 @@ function renderVocab(){
   document.getElementById("vocabCount").textContent=S.vocab.length?`${S.vocab.length} words · ${due} to review`:"";
 }
 document.getElementById("addVocab").onclick=()=>{const w=document.getElementById("v_word").value.trim();if(!w)return;S.vocab.push({id:uid(),word:w,meaning:document.getElementById("v_mean").value.trim(),example:document.getElementById("v_ex").value.trim(),status:"new"});save();["v_word","v_mean","v_ex"].forEach(id=>document.getElementById(id).value="");renderVocab();document.getElementById("v_word").focus();};
+
+/* ----- vocabulary from a spreadsheet (CSV, or cells pasted from a sheet) -----
+   .xlsx files are zipped, so they can't be read without a library; the app asks for
+   CSV instead. Columns: word, meaning, example, and optionally new/review/known. */
+const VI_TITLES=["word","words","phrase","phrases","term","terms","vocabulary","palabra","palabras",
+  "meaning","meanings","definition","translation","significado","traduccion","traducción",
+  "example","examples","sentence","ejemplo","status"];
+const VI_STATUS=["new","review","known"];
+function viSplit(line,delim){
+  const out=[];let cur="",q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+    else if(ch==='"')q=true;
+    else if(ch===delim){out.push(cur);cur="";}
+    else cur+=ch;}
+  out.push(cur);
+  return out.map(c=>c.trim().replace(/\s+/g," "));
+}
+function viDelim(line){
+  const count=ch=>{let n=0,q=false;for(const x of line){if(x==='"')q=!q;else if(x===ch&&!q)n++;}return n;};
+  const tab=count("\t"),semi=count(";"),comma=count(",");
+  if(tab&&tab>=semi&&tab>=comma)return "\t";
+  return semi>comma?";":",";
+}
+function parseWordTable(text){
+  const lines=text.replace(/^\uFEFF/,"").split(/\r\n|\r|\n/).filter(l=>l.trim()!=="");
+  if(!lines.length)return {words:[],dups:0,blank:0};
+  const delim=viDelim(lines[0]);
+  let rows=lines.map(l=>viSplit(l,delim));
+  const first=rows[0].map(c=>c.toLowerCase());
+  if(first.some(c=>VI_TITLES.includes(c)))rows=rows.slice(1);
+  const have=new Set(S.vocab.map(v=>String(v.word).trim().toLowerCase()));
+  const words=[];let dups=0,blank=0;
+  rows.forEach(r=>{
+    const w=(r[0]||"").trim();
+    if(!w){blank++;return;}
+    const key=w.toLowerCase();
+    if(have.has(key)){dups++;return;}
+    have.add(key);
+    const st=(r[3]||"").trim().toLowerCase();
+    words.push({id:uid(),word:w,meaning:(r[1]||"").trim(),example:(r[2]||"").trim(),status:VI_STATUS.includes(st)?st:"new"});
+  });
+  return {words,dups,blank};
+}
+function viMsg(text,cls){const m=document.getElementById("vocabImportMsg");m.className="hint "+(cls||"");m.textContent=text;}
+function importWords(text){
+  const {words,dups,blank}=parseWordTable(text);
+  if(!words.length){
+    viMsg(dups?`Nothing new — ${dups===1?"that word is":"those "+dups+" words are"} already in the bank.`
+               :"No words found. The first column should hold the word.","vi-no");
+    return;
+  }
+  S.vocab.push(...words);save();renderVocab();
+  const bits=[`Added ${words.length} word${words.length===1?"":"s"}`];
+  if(dups)bits.push(`${dups} already in the bank`);
+  if(blank)bits.push(`${blank} row${blank===1?"":"s"} without a word`);
+  viMsg(bits.join(" · "),"vi-ok");
+  document.getElementById("vocabPasteBox").value="";
+  document.getElementById("vocabPasteArea").hidden=true;
+}
+document.getElementById("vocabFile").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value="";
+  if(!f)return;
+  if(!/\.(csv|tsv|txt)$/i.test(f.name)){
+    viMsg("Only CSV files can be read. In Excel use File → Save As → CSV, in Google Sheets File → Download → CSV. Or copy the cells and paste them here.","vi-no");
+    return;
+  }
+  const rd=new FileReader();
+  rd.onload=()=>importWords(String(rd.result||""));
+  rd.onerror=()=>viMsg("That file could not be read.","vi-no");
+  rd.readAsText(f);
+});
+document.getElementById("vocabPasteToggle").onclick=()=>{
+  const a=document.getElementById("vocabPasteArea");a.hidden=!a.hidden;
+  if(!a.hidden)document.getElementById("vocabPasteBox").focus();
+};
+document.getElementById("vocabPasteImport").onclick=()=>{
+  const v=document.getElementById("vocabPasteBox").value;
+  if(v.trim())importWords(v);else viMsg("Paste the cells from your sheet first.","vi-no");
+};
 
 /* ----- vocab training: flashcards + quiz ----- */
 function trainPool(){const only=document.getElementById("onlyDue").checked;let p=S.vocab.filter(v=>only?v.status!=="known":true);return p;}
