@@ -237,6 +237,12 @@ label.btn{display:inline-block; cursor:pointer}
 .vlist{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:8px}
 .vcard{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; position:relative}
 .vcard .w{font-weight:700; font-size:1.05rem}
+.vcard .vforms{color:var(--faint); font-size:.8rem; font-style:italic; margin-top:1px}
+.pos{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:.68rem; color:var(--green); border:1px solid var(--line-strong); border-radius:999px; padding:1px 8px; margin-left:7px; vertical-align:middle; white-space:nowrap}
+select.pos-sel{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.72rem; color:var(--muted); width:auto; padding:2px 18px 2px 8px; border-radius:999px; border:1px dashed var(--line-strong); background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239db0a9' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 6px center; -webkit-appearance:none; appearance:none; cursor:pointer}
+select.pos-sel:hover,select.pos-sel:focus{border-color:var(--green); color:var(--ink); outline:none}
+select.pos-sel option{text-transform:none; font-family:var(--body); color:var(--ink); background:var(--surface-2)}
+.teacher select.pos-sel{pointer-events:none; border-color:transparent; background-image:none; padding:2px 0}
 .vcard .m{font-size:.9rem; margin-top:2px}
 .vcard .e{color:var(--muted); font-size:.85rem; font-style:italic; margin-top:4px}
 .vcard .vst{margin-top:8px; display:flex; gap:6px; flex-wrap:wrap}
@@ -256,6 +262,8 @@ label.btn{display:inline-block; cursor:pointer}
 .flash-face .fw{font-family:var(--disp); font-weight:900; font-size:2.2rem; text-transform:uppercase; letter-spacing:.02em}
 .flash-face .fm{font-size:1.15rem; margin-top:4px}
 .flash-face .fe{color:var(--muted); font-style:italic; margin-top:8px}
+.flash-face .fpos{margin-bottom:6px}
+.flash-face .fforms{color:var(--muted); font-style:italic; font-size:.95rem; margin-top:4px}
 .flash-face .fq{font-size:1.1rem; line-height:1.55; font-style:italic}
 .flash-face .flabel{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:.72rem; color:var(--faint); margin-bottom:8px}
 .fromsel{display:flex; gap:6px; align-items:center; font-size:.85rem; color:var(--muted); white-space:nowrap}
@@ -574,6 +582,7 @@ input,select,textarea{min-width:0; max-width:100%}
         <label class="fld">Word / phrase<input type="text" id="v_word" placeholder="give up"></label>
         <label class="fld">Meaning<input type="text" id="v_mean" placeholder="stop trying"></label>
         <label class="fld">Example<input type="text" id="v_ex" placeholder="Don't give up before the exam."></label>
+        <label class="fld">Type<select id="v_pos"><option value="">—</option></select></label>
         <button class="btn" id="addVocab">Add</button>
       </div>
       <div class="vimport">
@@ -594,8 +603,7 @@ input,select,textarea{min-width:0; max-width:100%}
         <button class="btn gold sm" id="startFlash">🃏 Flashcards</button>
         <label class="fromsel">start from <select id="flashFrom">
           <option value="word">the word</option>
-          <option value="example">an example</option>
-          <option value="meaning">the meaning</option>
+          <option value="clue">the definition + example</option>
         </select></label>
         <button class="btn gold sm" id="startQuiz">✏️ Quiz</button>
         <label style="display:flex; gap:6px; align-items:center; font-size:.85rem; color:var(--muted)"><input type="checkbox" id="onlyDue" style="width:auto" checked> only words to review</label>
@@ -675,6 +683,7 @@ const PAPERS={
   writing:{label:"Writing",max:40},
   speaking:{label:"Speaking",max:20}
 };
+const POS=["noun","verb","adjective","adverb","phrase","expression","other"];
 const TAGS=["Reading","Listening","Writing","Speaking","Vocabulary","Grammar","General"];
 const DEFAULT_SUG=[
   {id:"s1",text:"Vocab flashcard revision",tag:"Vocabulary"},
@@ -765,9 +774,13 @@ function normalize(d){
   d.habits=d.habits||{};
   d.suggestions=d.suggestions||(Array.isArray(d.habitDefs)?d.habitDefs.map(h=>({id:h.id,text:h.text,tag:"General"})):DEFAULT_SUG.map(s=>({...s})));
   d.dayNotes=d.dayNotes||{};
-  d.vocab=d.vocab||[];
+  d.vocab=(d.vocab||[]).map(v=>{
+    if(v&&!v.pos&&wordForms(v.word).forms.length)v.pos="verb";   // "know (knew, known)" is a verb
+    return v;
+  });
   d.resources=d.resources||[];
   d.settings=d.settings||{};
+  if(d.settings.flashFrom&&d.settings.flashFrom!=="word")d.settings.flashFrom="clue";  // was "example"/"meaning"
   return d;
 }
 function load(){
@@ -992,16 +1005,34 @@ function renderVocab(){
   if(!S.vocab.length)list.innerHTML='<div class="empty">No words yet. Add the first word you want to remember.</div>';
   S.vocab.slice().reverse().forEach(v=>{
     const el=document.createElement("div");el.className="vcard";
-    el.innerHTML=`<button class="del" data-v="${v.id}">✕</button><div class="w">${esc(v.word)}</div>${v.meaning?'<div class="m">'+esc(v.meaning)+'</div>':''}${v.example?'<div class="e">"'+esc(v.example)+'"</div>':''}<div class="vst">${["new","review","known"].map(st=>`<span class="chip ${v.status===st?'act '+st:''}" data-s="${st}" data-id="${v.id}">${st[0].toUpperCase()+st.slice(1)}</span>`).join("")}</div>`;
+    const {head,forms}=wordForms(v.word);
+    el.innerHTML=`<button class="del" data-v="${v.id}">✕</button>`+
+      `<div class="w">${esc(head)}</div>`+
+      (forms.length?`<div class="vforms">${forms.map(esc).join(" · ")}</div>`:"")+
+      (v.meaning?'<div class="m">'+esc(v.meaning)+'</div>':'')+
+      (v.example?'<div class="e">"'+esc(v.example)+'"</div>':'')+
+      `<div class="vst"><select class="pos-sel" data-pos="${v.id}" aria-label="Part of speech"><option value="">type…</option>${POS.map(x=>`<option value="${x}"${v.pos===x?" selected":""}>${x}</option>`).join("")}</select>`+
+      ["new","review","known"].map(st=>`<span class="chip ${v.status===st?'act '+st:''}" data-s="${st}" data-id="${v.id}">${st[0].toUpperCase()+st.slice(1)}</span>`).join("")+`</div>`;
     list.appendChild(el);
   });
   list.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{S.vocab=S.vocab.filter(x=>x.id!==b.dataset.v);save();renderVocab();});
+  list.querySelectorAll("[data-pos]").forEach(sel=>sel.onchange=()=>{const v=S.vocab.find(x=>x.id===sel.dataset.pos);if(v){v.pos=sel.value;save();renderVocab();}});
   list.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const v=S.vocab.find(x=>x.id===c.dataset.id);if(v){v.status=c.dataset.s;save();renderVocab();}});
   const due=S.vocab.filter(v=>v.status!=="known").length;
   const badge=document.getElementById("vBadge");if(due){badge.hidden=false;badge.textContent=due;}else badge.hidden=true;
   document.getElementById("vocabCount").textContent=S.vocab.length?`${S.vocab.length} words · ${due} to review`:"";
 }
-document.getElementById("addVocab").onclick=()=>{const w=document.getElementById("v_word").value.trim();if(!w)return;S.vocab.push({id:uid(),word:w,meaning:document.getElementById("v_mean").value.trim(),example:document.getElementById("v_ex").value.trim(),status:"new"});save();["v_word","v_mean","v_ex"].forEach(id=>document.getElementById(id).value="");renderVocab();document.getElementById("v_word").focus();};
+document.getElementById("v_pos").innerHTML='<option value="">—</option>'+POS.map(x=>`<option value="${x}">${x}</option>`).join("");
+document.getElementById("v_word").placeholder="give up (gave up, given up)";
+document.getElementById("addVocab").onclick=()=>{
+  const w=document.getElementById("v_word").value.trim();if(!w)return;
+  let pos=document.getElementById("v_pos").value;
+  if(!pos&&wordForms(w).forms.length)pos="verb";
+  S.vocab.push({id:uid(),word:w,pos,meaning:document.getElementById("v_mean").value.trim(),example:document.getElementById("v_ex").value.trim(),status:"new"});
+  save();["v_word","v_mean","v_ex"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("v_pos").value="";
+  renderVocab();document.getElementById("v_word").focus();
+};
 
 /* ----- vocabulary from a spreadsheet (CSV, or cells pasted from a sheet) -----
    .xlsx files are zipped, so they can't be read without a library; the app asks for
@@ -1090,10 +1121,18 @@ document.getElementById("vocabPasteImport").onclick=()=>{
    ("gives up" for "give up") is not matched either, so write examples in the same form.
    Written without lookbehind, which older iPhone browsers don't support. */
 const BLANK_EDGE="[A-Za-z0-9\\u00C0-\\u024F]";
+/* A word may carry its other forms in brackets, the way the teacher writes them:
+   "know (knew, known)" -> head "know", forms ["knew","known"]. */
+function wordForms(word){
+  const raw=String(word||"").trim(),m=raw.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+  if(!m)return {head:raw,forms:[]};
+  return {head:(m[1].trim()||raw),forms:m[2].split(/[,;/]/).map(x=>x.trim()).filter(Boolean)};
+}
 function blankWord(text,word){
-  const safe=esc(text),w=esc(String(word||"").trim());
-  if(!w)return safe;
-  const pat=w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const safe=esc(text),{head,forms}=wordForms(word);
+  const all=[head,...forms].filter(Boolean).map(esc).sort((a,b)=>b.length-a.length);
+  if(!all.length)return safe;
+  const pat=all.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|");
   const re=new RegExp("(^|[^A-Za-z0-9\\u00C0-\\u024F])("+pat+")(?!"+BLANK_EDGE+")","ig");
   return safe.replace(re,(m,before)=>before+'<span class="blank">_____</span>');
 }
@@ -1105,12 +1144,12 @@ document.getElementById("startFlash").onclick=()=>{
   flashFrom=document.getElementById("flashFrom").value;
   S.settings.flashFrom=flashFrom;save();
   let pool=trainPool();
-  const need=flashFrom==="example"?"example":flashFrom==="meaning"?"meaning":null;
-  const short=need?pool.filter(v=>!(v[need]||"").trim()).length:0;
-  if(need)pool=pool.filter(v=>(v[need]||"").trim());
+  const clue=flashFrom==="clue";
+  const short=clue?pool.filter(v=>!(v.meaning||"").trim()&&!(v.example||"").trim()).length:0;
+  if(clue)pool=pool.filter(v=>(v.meaning||"").trim()||(v.example||"").trim());
   if(!pool.length){
     a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">'+
-      (need?`No words with ${need==="example"?"an example":"a meaning"} to practise. Add ${need==="example"?"examples":"meanings"}, start from the word, or untick "only words to review".`
+      (clue?'No words with a definition or an example to practise. Add them, start from the word, or untick "only words to review".'
            :'No words to practise. Add some, or untick "only words to review".')+'</div></div>';
     return;
   }
@@ -1118,23 +1157,24 @@ document.getElementById("startFlash").onclick=()=>{
 };
 function showFlash(short){
   const v=flashQ[flashI],a=document.getElementById("trainArea");
-  const word=`<div class="fw">${esc(v.word)}</div>`;
+  const {head,forms}=wordForms(v.word);
+  const pos=v.pos?`<div class="fpos"><span class="pos" style="margin:0">${esc(v.pos)}</span></div>`:"";
+  const word=`<div class="fw">${esc(head)}</div>`+(forms.length?`<div class="fforms">${forms.map(esc).join(" · ")}</div>`:"");
   const meaning=v.meaning?`<div class="fm">${blankWord(v.meaning,v.word)}</div>`:'<div class="fm">(no meaning saved)</div>';
   const example=v.example?`<div class="fe">"${blankWord(v.example,v.word)}"</div>`:"";
   let front,back;
-  if(flashFrom==="example"){
-    front=`<div class="flabel">Which word fits?</div><div class="fq">"${blankWord(v.example,v.word)}"</div>`;
-    back=word+meaning;
-  }else if(flashFrom==="meaning"){
-    front=`<div class="flabel">Which word is this?</div><div class="fq">${blankWord(v.meaning,v.word)}</div>`;
-    back=word+example;
+  if(flashFrom==="clue"){
+    front=pos+`<div class="flabel">Which word is this?</div>`+
+      (v.meaning?`<div class="fq">${blankWord(v.meaning,v.word)}</div>`:"")+
+      (v.example?`<div class="fe">"${blankWord(v.example,v.word)}"</div>`:"");
+    back=word;
   }else{
-    front=word;
+    front=word+pos;
     back=meaning+example;
   }
   a.innerHTML=`<div class="stage">
-    <div class="stage-head"><span>Flashcards · from ${flashFrom==="word"?"the word":flashFrom==="example"?"an example":"the meaning"}</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
-    ${short?`<div class="hint" style="text-align:center;margin-bottom:8px">${short} word${short===1?"":"s"} left out for having no ${flashFrom==="example"?"example":"meaning"}.</div>`:""}
+    <div class="stage-head"><span>Flashcards · from ${flashFrom==="clue"?"the definition":"the word"}</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
+    ${short?`<div class="hint" style="text-align:center;margin-bottom:8px">${short} word${short===1?"":"s"} left out for having neither a definition nor an example.</div>`:""}
     <div class="flash" id="flashEl"><div class="flash-inner">
       <div class="flash-face front">${front}<div class="tapme">tap to flip</div></div>
       <div class="flash-face back">${back}<div class="tapme">tap to flip</div></div>
@@ -1156,6 +1196,7 @@ function showQuiz(){
   const ex=v.example?blankWord(v.example,v.word):"";
   a.innerHTML=`<div class="stage">
     <div class="stage-head"><span>Quiz — type the word</span><span class="scorebar">Score ${quizScore} / ${quizQ.length}</span></div>
+    ${v.pos?`<div style="text-align:center;margin-bottom:6px"><span class="pos" style="margin:0">${esc(v.pos)}</span></div>`:""}
     <div class="quiz-q"><b>${blankWord(v.meaning,v.word)}</b></div>
     ${ex?'<div class="quiz-q" style="font-size:1rem;color:var(--muted);font-style:italic">'+ex+'</div>':''}
     <div class="quiz-in"><input type="text" id="quizInput" placeholder="type the word or phrase" autocomplete="off"></div>
@@ -1167,9 +1208,10 @@ function showQuiz(){
   let answered=false;
   function check(){
     if(answered)return;answered=true;
-    const guess=inp.value.trim().toLowerCase(),correct=v.word.trim().toLowerCase();
+    const guess=inp.value.trim().toLowerCase(),wf=wordForms(v.word);
+    const accepted=[wf.head,...wf.forms,v.word].map(x=>String(x).trim().toLowerCase()).filter(Boolean);
     const fb=document.getElementById("quizFb");
-    if(guess===correct){quizScore++;fb.className="quiz-feedback qf-ok";fb.textContent="✓ Correct!";v.status="known";}
+    if(accepted.includes(guess)){quizScore++;fb.className="quiz-feedback qf-ok";fb.textContent="✓ Correct!";v.status="known";}
     else{fb.className="quiz-feedback qf-no";fb.innerHTML="Answer: <b>"+esc(v.word)+"</b>"+(guess?"":" (skipped)");if(v.status==="new")v.status="review";}
     save();renderVocab();
     document.getElementById("quizCheck").hidden=true;document.getElementById("quizNext").hidden=false;document.getElementById("quizNext").focus();
