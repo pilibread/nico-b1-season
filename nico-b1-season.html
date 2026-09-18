@@ -259,7 +259,7 @@ label.btn{display:inline-block; cursor:pointer}
 .flash-face .tapme{position:absolute; bottom:10px; font-size:.72rem; color:var(--faint)}
 .stage-actions{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap}
 .quiz-q{text-align:center; font-size:1.2rem; margin-bottom:6px}
-.quiz-q .blank{color:var(--gold); font-weight:700}
+.blank{color:var(--gold); font-weight:700; letter-spacing:.05em}
 .quiz-in{max-width:360px; margin:12px auto 0}
 .quiz-feedback{text-align:center; min-height:1.6em; margin-top:12px; font-weight:600}
 .qf-ok{color:var(--good)} .qf-no{color:var(--below)}
@@ -326,7 +326,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .sync.saving::before{background:var(--warn)}
 .sync.error::before,.sync.offline::before{background:var(--below)}
 .teacher-bar{background:linear-gradient(90deg,var(--gold),var(--gold-deep)); color:var(--bg); font-weight:600; font-size:.9rem; text-align:center; padding:8px 20px}
-.teacher .log-form,.teacher #addResult,.teacher .vocab-add,.teacher .vimport,.teacher .practice-bar,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
+.teacher .log-form,.teacher #addResult,.teacher .practice-bar,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
 .teacher .chk,.teacher .chip,.teacher .wlabel{pointer-events:none}
 
 @media (max-width:860px){
@@ -474,7 +474,7 @@ input,select,textarea{min-width:0; max-width:100%}
     </div>
   </div>
 </div></header>
-<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only.</div>
+<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except adding words.</div>
 
 <nav class="tabs"><div class="wrap" id="tabbar">
   <button class="tab active" data-tab="overview"><span class="t-full">Player Card</span><span class="t-short">Card</span></button>
@@ -1075,6 +1075,14 @@ document.getElementById("vocabPasteImport").onclick=()=>{
 };
 
 /* ----- vocab training: flashcards + quiz ----- */
+/* An example sentence with the word itself blanked out, so the sentence can be read
+   without handing over the answer. Only the word or phrase as written is matched —
+   an inflected form ("gives up" for "give up") stays visible. */
+function blankWord(example,word){
+  const safe=esc(example),w=esc(String(word||"").trim());
+  if(!w)return safe;
+  return safe.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"ig"),'<span class="blank">_____</span>');
+}
 function trainPool(){const only=document.getElementById("onlyDue").checked;let p=S.vocab.filter(v=>only?v.status!=="known":true);return p;}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 let flashQ=[],flashI=0;
@@ -1085,7 +1093,7 @@ function showFlash(){
     <div class="stage-head"><span>Flashcards</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
     <div class="flash" id="flashEl"><div class="flash-inner">
       <div class="flash-face front"><div class="fw">${esc(v.word)}</div><div class="tapme">tap to flip</div></div>
-      <div class="flash-face back"><div class="fm">${esc(v.meaning||"(no meaning saved)")}</div>${v.example?'<div class="fe">"'+esc(v.example)+'"</div>':''}<div class="tapme">tap to flip</div></div>
+      <div class="flash-face back"><div class="fm">${esc(v.meaning||"(no meaning saved)")}</div>${v.example?'<div class="fe">"'+blankWord(v.example,v.word)+'"</div>':''}<div class="tapme">tap to flip</div></div>
     </div></div>
     <div class="stage-actions">
       <button class="btn ghost sm" data-mark="review">Still learning</button>
@@ -1101,7 +1109,7 @@ let quizQ=[],quizI=0,quizScore=0;
 document.getElementById("startQuiz").onclick=()=>{const pool=trainPool().filter(v=>v.meaning);const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">Quiz needs words that have a meaning saved. Add meanings, or untick "only words to review".</div></div>';return;}quizQ=shuffle(pool);quizI=0;quizScore=0;showQuiz();};
 function showQuiz(){
   const v=quizQ[quizI],a=document.getElementById("trainArea");
-  const ex=v.example?esc(v.example).replace(new RegExp(v.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),"ig"),'<span class="blank">_____</span>'):"";
+  const ex=v.example?blankWord(v.example,v.word):"";
   a.innerHTML=`<div class="stage">
     <div class="stage-head"><span>Quiz — type the word</span><span class="scorebar">Score ${quizScore} / ${quizQ.length}</span></div>
     <div class="quiz-q"><b>${esc(v.meaning)}</b></div>

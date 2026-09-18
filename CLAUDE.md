@@ -38,7 +38,8 @@ Repo `pilibread/nico-b1-season`, GitHub Pages from `main`. Publishing = commit +
 Five tabs: Player Card, Match Log (one paper per entry, with a note), Training (tickable
 activities with editable categories, five-week calendar with day pop-ups, streak, daily
 reflection), Vocabulary (word bank, flashcards, quiz), Practice (links, data backup).
-Firebase sync, read-only teacher view, PWA and phone layout are all built and live.
+Firebase sync, teacher view (read-only except adding vocabulary), PWA and phone layout
+are all built and live.
 No open roadmap items.
 
 ## Things that bite

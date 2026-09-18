@@ -93,7 +93,7 @@ service cloud.firestore {
 - The Claude-artifact version can't reach Firebase (its sandbox blocks the connection). To move data from it: *Copy my data* there, *Paste to restore* here.
 - No login. Anyone with the address can read and change the data, which is why it holds only a first name, a photo and study data.
 
-**Teacher view.** Open the page with `?teacher` on the end. It shows Nico's live data with a gold bar across the top and is read-only: every form, tick box, ✕ and category dropdown is hidden or disabled. The calendar pop-up still opens, which is where the teacher reads reflections. The browser then remembers the teacher view (`localStorage` key `nico_teacher`), so a home-screen shortcut keeps it; `?student` goes back to the normal view. This is a convenience, not a lock.
+**Teacher view.** Open the page with `?teacher` on the end. It shows Nico's live data with a gold bar across the top. Everything is read-only — every form, tick box, ✕ and category dropdown is hidden or disabled — except the Vocabulary tab's two ways of adding words (one at a time, or from a spreadsheet), so the teacher can stock the word bank from her own device. Words can only be added there, not removed or re-marked. The calendar pop-up still opens, which is where the teacher reads reflections. The browser then remembers the teacher view (`localStorage` key `nico_teacher`), so a home-screen shortcut keeps it; `?student` goes back to the normal view. This is a convenience, not a lock.
 
 ## On a phone
 
