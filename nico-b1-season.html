@@ -236,7 +236,7 @@ label.btn{display:inline-block; cursor:pointer}
 .vi-no{color:var(--below)}
 .vlist{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:8px}
 .vcard{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; position:relative}
-.vcard .w{font-weight:700; font-size:1.05rem}
+.vcard .w{font-weight:700; font-size:1.05rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-right:22px}
 .vcard .vforms{color:var(--faint); font-size:.8rem; font-style:italic; margin-top:1px}
 .pos{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:.68rem; color:var(--green); border:1px solid var(--line-strong); border-radius:999px; padding:1px 8px; margin-left:7px; vertical-align:middle; white-space:nowrap}
 select.pos-sel{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.72rem; color:var(--muted); width:auto; padding:2px 18px 2px 8px; border-radius:999px; border:1px dashed var(--line-strong); background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239db0a9' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 6px center; -webkit-appearance:none; appearance:none; cursor:pointer}
@@ -1019,13 +1019,13 @@ function renderVocab(){
   if(!S.vocab.length)list.innerHTML='<div class="empty">No words yet. Add the first word you want to remember.</div>';
   S.vocab.slice().reverse().forEach(v=>{
     const el=document.createElement("div");el.className="vcard";
-    const {head,forms}=wordForms(v.word);
+    const {head,forms}=formsOf(v);
     el.innerHTML=`<button class="del" data-v="${v.id}">✕</button>`+
-      `<div class="w">${esc(head)}</div>`+
+      `<div class="w">${esc(head)}<select class="pos-sel" data-pos="${v.id}" aria-label="Part of speech"><option value="">type…</option>${POS.map(x=>`<option value="${x}"${v.pos===x?" selected":""}>${x}</option>`).join("")}</select></div>`+
       (forms.length?`<div class="vforms">${forms.map(esc).join(" · ")}</div>`:"")+
       (v.meaning?'<div class="m">'+esc(v.meaning)+'</div>':'')+
       (v.example?'<div class="e">"'+esc(v.example)+'"</div>':'')+
-      `<div class="vst"><select class="pos-sel" data-pos="${v.id}" aria-label="Part of speech"><option value="">type…</option>${POS.map(x=>`<option value="${x}"${v.pos===x?" selected":""}>${x}</option>`).join("")}</select>`+
+      `<div class="vst">`+
       ["new","review","known"].map(st=>`<span class="chip ${v.status===st?'act '+st:''}" data-s="${st}" data-id="${v.id}">${st[0].toUpperCase()+st.slice(1)}</span>`).join("")+`</div>`;
     list.appendChild(el);
   });
@@ -1161,8 +1161,34 @@ function wordForms(word){
   if(!m)return {head:raw,forms:[]};
   return {head:(m[1].trim()||raw),forms:m[2].split(/[,;/]/).map(x=>x.trim()).filter(Boolean)};
 }
-function blankWord(text,word){
-  const safe=esc(text),{head,forms}=wordForms(word);
+/* Modals take no -s, and a few verbs are irregular. */
+const MODALS=["can","could","may","might","must","shall","should","will","would"];
+const THIRD_IRREG={be:"is",have:"has",do:"does",go:"goes"};
+function thirdPerson(head){
+  const parts=String(head||"").trim().split(/\s+/);
+  const w=(parts[0]||"").toLowerCase();
+  if(!w||MODALS.includes(w))return "";
+  let out;
+  if(THIRD_IRREG[w])out=THIRD_IRREG[w];
+  else if(/[^aeiou]y$/.test(w))out=w.slice(0,-1)+"ies";
+  else if(/(s|sh|ch|x|z|o)$/.test(w))out=w+"es";
+  else out=w+"s";
+  return [out,...parts.slice(1)].join(" ");
+}
+/* Every form of an entry: what the teacher wrote in brackets, plus, for a verb,
+   the third person singular ("mean (meant)" -> means, meant), so that form is shown
+   on the card, accepted in the quiz, and hidden in examples. */
+function formsOf(v){
+  const {head,forms}=wordForms(v&&v.word);
+  const out=forms.slice();
+  if(v&&v.pos==="verb"){
+    const t=thirdPerson(head);
+    if(t&&t.toLowerCase()!==head.toLowerCase()&&!out.some(f=>f.toLowerCase()===t.toLowerCase()))out.unshift(t);
+  }
+  return {head,forms:out};
+}
+function blankWord(text,v){
+  const safe=esc(text),{head,forms}=formsOf(typeof v==="string"?{word:v}:v);
   const all=[head,...forms].filter(Boolean).map(esc).sort((a,b)=>b.length-a.length);
   if(!all.length)return safe;
   const pat=all.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|");
@@ -1190,19 +1216,21 @@ document.getElementById("startFlash").onclick=()=>{
 };
 function showFlash(short){
   const v=flashQ[flashI],a=document.getElementById("trainArea");
-  const {head,forms}=wordForms(v.word);
-  const pos=v.pos?`<div class="fpos"><span class="pos" style="margin:0">${esc(v.pos)}</span></div>`:"";
-  const word=`<div class="fw">${esc(head)}</div>`+(forms.length?`<div class="fforms">${forms.map(esc).join(" · ")}</div>`:"");
-  const meaning=v.meaning?`<div class="fm">${blankWord(v.meaning,v.word)}</div>`:'<div class="fm">(no meaning saved)</div>';
-  const example=v.example?`<div class="fe">"${blankWord(v.example,v.word)}"</div>`:"";
+  const {head,forms}=formsOf(v);
+  const posPill=v.pos?`<span class="pos" style="margin:0">${esc(v.pos)}</span>`:"";
+  const pos=posPill?`<div class="fpos">${posPill}</div>`:"";
+  const word=`<div class="fw">${esc(head)}</div>`+(posPill?`<div class="fpos">${posPill}</div>`:"")+
+    (forms.length?`<div class="fforms">${forms.map(esc).join(" · ")}</div>`:"");
+  const meaning=v.meaning?`<div class="fm">${blankWord(v.meaning,v)}</div>`:'<div class="fm">(no meaning saved)</div>';
+  const example=v.example?`<div class="fe">"${blankWord(v.example,v)}"</div>`:"";
   let front,back;
   if(flashFrom==="clue"){
     front=pos+`<div class="flabel">Which word is this?</div>`+
-      (v.meaning?`<div class="fq">${blankWord(v.meaning,v.word)}</div>`:"")+
-      (v.example?`<div class="fe">"${blankWord(v.example,v.word)}"</div>`:"");
+      (v.meaning?`<div class="fq">${blankWord(v.meaning,v)}</div>`:"")+
+      (v.example?`<div class="fe">"${blankWord(v.example,v)}"</div>`:"");
     back=word;
   }else{
-    front=word+pos;
+    front=word;
     back=meaning+example;
   }
   a.innerHTML=`<div class="stage">
@@ -1226,11 +1254,11 @@ let quizQ=[],quizI=0,quizScore=0;
 document.getElementById("startQuiz").onclick=()=>{const pool=trainPool().filter(v=>v.meaning);const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">Quiz needs words that have a meaning saved. Add meanings, or untick "only words to review".</div></div>';return;}quizQ=shuffle(pool);quizI=0;quizScore=0;showQuiz();enterFocus();};
 function showQuiz(){
   const v=quizQ[quizI],a=document.getElementById("trainArea");
-  const ex=v.example?blankWord(v.example,v.word):"";
+  const ex=v.example?blankWord(v.example,v):"";
   a.innerHTML=`<div class="stage">
     <div class="stage-head"><span>Quiz — type the word</span><span class="scorebar">Score ${quizScore} / ${quizQ.length}</span></div>
     ${v.pos?`<div style="text-align:center;margin-bottom:6px"><span class="pos" style="margin:0">${esc(v.pos)}</span></div>`:""}
-    <div class="quiz-q"><b>${blankWord(v.meaning,v.word)}</b></div>
+    <div class="quiz-q"><b>${blankWord(v.meaning,v)}</b></div>
     ${ex?'<div class="quiz-q" style="font-size:1rem;color:var(--muted);font-style:italic">'+ex+'</div>':''}
     <div class="quiz-in"><input type="text" id="quizInput" placeholder="type the word or phrase" autocomplete="off"></div>
     <div class="quiz-feedback" id="quizFb"></div>
@@ -1241,7 +1269,7 @@ function showQuiz(){
   let answered=false;
   function check(){
     if(answered)return;answered=true;
-    const guess=inp.value.trim().toLowerCase(),wf=wordForms(v.word);
+    const guess=inp.value.trim().toLowerCase(),wf=formsOf(v);
     const accepted=[wf.head,...wf.forms,v.word].map(x=>String(x).trim().toLowerCase()).filter(Boolean);
     const fb=document.getElementById("quizFb");
     if(accepted.includes(guess)){quizScore++;fb.className="quiz-feedback qf-ok";fb.textContent="✓ Correct!";v.status="known";}
