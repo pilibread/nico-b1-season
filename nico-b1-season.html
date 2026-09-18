@@ -256,6 +256,10 @@ label.btn{display:inline-block; cursor:pointer}
 .flash-face .fw{font-family:var(--disp); font-weight:900; font-size:2.2rem; text-transform:uppercase; letter-spacing:.02em}
 .flash-face .fm{font-size:1.15rem; margin-top:4px}
 .flash-face .fe{color:var(--muted); font-style:italic; margin-top:8px}
+.flash-face .fq{font-size:1.1rem; line-height:1.55; font-style:italic}
+.flash-face .flabel{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:.72rem; color:var(--faint); margin-bottom:8px}
+.fromsel{display:flex; gap:6px; align-items:center; font-size:.85rem; color:var(--muted); white-space:nowrap}
+.fromsel select{width:auto; padding:6px 9px; font-size:.85rem}
 .flash-face .tapme{position:absolute; bottom:10px; font-size:.72rem; color:var(--faint)}
 .stage-actions{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap}
 .quiz-q{text-align:center; font-size:1.2rem; margin-bottom:6px}
@@ -588,6 +592,11 @@ input,select,textarea{min-width:0; max-width:100%}
       </div>
       <div class="practice-bar">
         <button class="btn gold sm" id="startFlash">🃏 Flashcards</button>
+        <label class="fromsel">start from <select id="flashFrom">
+          <option value="word">the word</option>
+          <option value="example">an example</option>
+          <option value="meaning">the meaning</option>
+        </select></label>
         <button class="btn gold sm" id="startQuiz">✏️ Quiz</button>
         <label style="display:flex; gap:6px; align-items:center; font-size:.85rem; color:var(--muted)"><input type="checkbox" id="onlyDue" style="width:auto" checked> only words to review</label>
         <span class="hint" id="vocabCount"></span>
@@ -1075,25 +1084,60 @@ document.getElementById("vocabPasteImport").onclick=()=>{
 };
 
 /* ----- vocab training: flashcards + quiz ----- */
-/* An example sentence with the word itself blanked out, so the sentence can be read
-   without handing over the answer. Only the word or phrase as written is matched —
-   an inflected form ("gives up" for "give up") stays visible. */
-function blankWord(example,word){
-  const safe=esc(example),w=esc(String(word||"").trim());
+/* Text with the word itself blanked out, so a meaning or example can be read without
+   handing over the answer. Matches the whole word only: "as" does not blank the middle
+   of "Almas", and "enjoy" leaves "enjoyable" alone. A different form of the word
+   ("gives up" for "give up") is not matched either, so write examples in the same form.
+   Written without lookbehind, which older iPhone browsers don't support. */
+const BLANK_EDGE="[A-Za-z0-9\\u00C0-\\u024F]";
+function blankWord(text,word){
+  const safe=esc(text),w=esc(String(word||"").trim());
   if(!w)return safe;
-  return safe.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"ig"),'<span class="blank">_____</span>');
+  const pat=w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const re=new RegExp("(^|[^A-Za-z0-9\\u00C0-\\u024F])("+pat+")(?!"+BLANK_EDGE+")","ig");
+  return safe.replace(re,(m,before)=>before+'<span class="blank">_____</span>');
 }
 function trainPool(){const only=document.getElementById("onlyDue").checked;let p=S.vocab.filter(v=>only?v.status!=="known":true);return p;}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-let flashQ=[],flashI=0;
-document.getElementById("startFlash").onclick=()=>{const pool=trainPool();const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">No words to practise. Add some, or untick "only words to review".</div></div>';return;}flashQ=shuffle(pool);flashI=0;showFlash();};
-function showFlash(){
+let flashQ=[],flashI=0,flashFrom="word";
+document.getElementById("startFlash").onclick=()=>{
+  const a=document.getElementById("trainArea");
+  flashFrom=document.getElementById("flashFrom").value;
+  S.settings.flashFrom=flashFrom;save();
+  let pool=trainPool();
+  const need=flashFrom==="example"?"example":flashFrom==="meaning"?"meaning":null;
+  const short=need?pool.filter(v=>!(v[need]||"").trim()).length:0;
+  if(need)pool=pool.filter(v=>(v[need]||"").trim());
+  if(!pool.length){
+    a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">'+
+      (need?`No words with ${need==="example"?"an example":"a meaning"} to practise. Add ${need==="example"?"examples":"meanings"}, start from the word, or untick "only words to review".`
+           :'No words to practise. Add some, or untick "only words to review".')+'</div></div>';
+    return;
+  }
+  flashQ=shuffle(pool);flashI=0;showFlash(short);
+};
+function showFlash(short){
   const v=flashQ[flashI],a=document.getElementById("trainArea");
+  const word=`<div class="fw">${esc(v.word)}</div>`;
+  const meaning=v.meaning?`<div class="fm">${blankWord(v.meaning,v.word)}</div>`:'<div class="fm">(no meaning saved)</div>';
+  const example=v.example?`<div class="fe">"${blankWord(v.example,v.word)}"</div>`:"";
+  let front,back;
+  if(flashFrom==="example"){
+    front=`<div class="flabel">Which word fits?</div><div class="fq">"${blankWord(v.example,v.word)}"</div>`;
+    back=word+meaning;
+  }else if(flashFrom==="meaning"){
+    front=`<div class="flabel">Which word is this?</div><div class="fq">${blankWord(v.meaning,v.word)}</div>`;
+    back=word+example;
+  }else{
+    front=word;
+    back=meaning+example;
+  }
   a.innerHTML=`<div class="stage">
-    <div class="stage-head"><span>Flashcards</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
+    <div class="stage-head"><span>Flashcards · from ${flashFrom==="word"?"the word":flashFrom==="example"?"an example":"the meaning"}</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
+    ${short?`<div class="hint" style="text-align:center;margin-bottom:8px">${short} word${short===1?"":"s"} left out for having no ${flashFrom==="example"?"example":"meaning"}.</div>`:""}
     <div class="flash" id="flashEl"><div class="flash-inner">
-      <div class="flash-face front"><div class="fw">${esc(v.word)}</div><div class="tapme">tap to flip</div></div>
-      <div class="flash-face back"><div class="fm">${esc(v.meaning||"(no meaning saved)")}</div>${v.example?'<div class="fe">"'+blankWord(v.example,v.word)+'"</div>':''}<div class="tapme">tap to flip</div></div>
+      <div class="flash-face front">${front}<div class="tapme">tap to flip</div></div>
+      <div class="flash-face back">${back}<div class="tapme">tap to flip</div></div>
     </div></div>
     <div class="stage-actions">
       <button class="btn ghost sm" data-mark="review">Still learning</button>
@@ -1103,7 +1147,7 @@ function showFlash(){
   document.getElementById("flashEl").onclick=()=>document.getElementById("flashEl").classList.toggle("flipped");
   a.querySelectorAll("[data-mark]").forEach(b=>b.onclick=()=>{v.status=b.dataset.mark;save();renderVocab();next();});
   document.getElementById("flashNext").onclick=next;
-  function next(){flashI++;if(flashI>=flashQ.length){a.innerHTML='<div class="stage"><div style="text-align:center">🎉 <b>Deck complete</b> — '+flashQ.length+' cards. <div style="margin-top:10px"><button class="btn sm" id="againF">Go again</button></div></div></div>';document.getElementById("againF").onclick=()=>document.getElementById("startFlash").click();}else showFlash();}
+  function next(){flashI++;if(flashI>=flashQ.length){a.innerHTML='<div class="stage"><div style="text-align:center">🎉 <b>Deck complete</b> — '+flashQ.length+' cards. <div style="margin-top:10px"><button class="btn sm" id="againF">Go again</button></div></div></div>';document.getElementById("againF").onclick=()=>document.getElementById("startFlash").click();}else showFlash(short);}
 }
 let quizQ=[],quizI=0,quizScore=0;
 document.getElementById("startQuiz").onclick=()=>{const pool=trainPool().filter(v=>v.meaning);const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">Quiz needs words that have a meaning saved. Add meanings, or untick "only words to review".</div></div>';return;}quizQ=shuffle(pool);quizI=0;quizScore=0;showQuiz();};
@@ -1112,7 +1156,7 @@ function showQuiz(){
   const ex=v.example?blankWord(v.example,v.word):"";
   a.innerHTML=`<div class="stage">
     <div class="stage-head"><span>Quiz — type the word</span><span class="scorebar">Score ${quizScore} / ${quizQ.length}</span></div>
-    <div class="quiz-q"><b>${esc(v.meaning)}</b></div>
+    <div class="quiz-q"><b>${blankWord(v.meaning,v.word)}</b></div>
     ${ex?'<div class="quiz-q" style="font-size:1rem;color:var(--muted);font-style:italic">'+ex+'</div>':''}
     <div class="quiz-in"><input type="text" id="quizInput" placeholder="type the word or phrase" autocomplete="off"></div>
     <div class="quiz-feedback" id="quizFb"></div>
@@ -1167,6 +1211,7 @@ document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(documen
 /* ----- init ----- */
 function renderAll(){renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderVocab();renderRes();}
 paperOptions();tagOptions();
+if(S.settings.flashFrom)document.getElementById("flashFrom").value=S.settings.flashFrom;
 document.getElementById("f_date").value=todayISO();
 if(TEACHER){document.body.classList.add("teacher");document.getElementById("teacherBar").hidden=false;document.title="Nico's B1 Season — teacher view";}
 renderAll();
