@@ -142,6 +142,7 @@ label.fld{display:flex; flex-direction:column; gap:5px; font-size:.78rem; font-w
 .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line-strong)}
 .btn.ghost:hover{border-color:var(--green)}
 .btn.sm{padding:6px 13px; font-size:.85rem}
+.btn:disabled{opacity:.35; cursor:default}
 .del{background:none; border:none; color:var(--faint); cursor:pointer; font-size:1rem; line-height:1}
 .del:hover{color:var(--below)}
 .empty{color:var(--faint); font-style:italic; padding:14px 2px; font-size:.9rem}
@@ -1241,6 +1242,7 @@ function showFlash(short){
       <div class="flash-face back">${back}<div class="tapme">tap to flip</div></div>
     </div></div>
     <div class="stage-actions">
+      <button class="btn ghost sm" id="flashPrev" ${flashI===0?"disabled":""}>← Previous</button>
       <button class="btn ghost sm" data-mark="review">Still learning</button>
       <button class="btn sm" data-mark="known">Got it ✓</button>
       <button class="btn gold sm" id="flashNext">Next →</button>
@@ -1248,39 +1250,54 @@ function showFlash(short){
   document.getElementById("flashEl").onclick=()=>document.getElementById("flashEl").classList.toggle("flipped");
   a.querySelectorAll("[data-mark]").forEach(b=>b.onclick=()=>{v.status=b.dataset.mark;save();renderVocab();next();});
   document.getElementById("flashNext").onclick=next;
-  function next(){flashI++;if(flashI>=flashQ.length){a.innerHTML='<div class="stage"><div style="text-align:center">🎉 <b>Deck complete</b> — '+flashQ.length+' cards. <div style="margin-top:10px"><button class="btn sm" id="againF">Go again</button></div></div></div>';document.getElementById("againF").onclick=()=>document.getElementById("startFlash").click();}else showFlash(short);}
+  document.getElementById("flashPrev").onclick=()=>{if(flashI>0){flashI--;showFlash(short);}};
+  function next(){flashI++;if(flashI>=flashQ.length){a.innerHTML='<div class="stage"><div style="text-align:center">🎉 <b>Deck complete</b> — '+flashQ.length+' cards. <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn ghost sm" id="backF">← Previous</button><button class="btn sm" id="againF">Go again</button></div></div></div>';document.getElementById("againF").onclick=()=>document.getElementById("startFlash").click();document.getElementById("backF").onclick=()=>{flashI=flashQ.length-1;showFlash(short);};}else showFlash(short);}
 }
-let quizQ=[],quizI=0,quizScore=0;
-document.getElementById("startQuiz").onclick=()=>{const pool=trainPool().filter(v=>v.meaning);const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">Quiz needs words that have a meaning saved. Add meanings, or untick "only words to review".</div></div>';return;}quizQ=shuffle(pool);quizI=0;quizScore=0;showQuiz();enterFocus();};
+let quizQ=[],quizI=0,quizScore=0,quizAns=[];
+document.getElementById("startQuiz").onclick=()=>{const pool=trainPool().filter(v=>v.meaning);const a=document.getElementById("trainArea");if(!pool.length){a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">Quiz needs words that have a meaning saved. Add meanings, or untick "only words to review".</div></div>';return;}quizQ=shuffle(pool);quizI=0;quizScore=0;quizAns=[];showQuiz();enterFocus();};
 function showQuiz(){
   const v=quizQ[quizI],a=document.getElementById("trainArea");
   const ex=v.example?blankWord(v.example,v):"";
+  const done=quizAns[quizI];                       // already answered: show it again, don't re-score
   a.innerHTML=`<div class="stage">
     <div class="stage-head"><span>Quiz — type the word</span><span class="scorebar">Score ${quizScore} / ${quizQ.length}</span></div>
     ${v.pos?`<div style="text-align:center;margin-bottom:6px"><span class="pos" style="margin:0">${esc(v.pos)}</span></div>`:""}
     <div class="quiz-q"><b>${blankWord(v.meaning,v)}</b></div>
     ${ex?'<div class="quiz-q" style="font-size:1rem;color:var(--muted);font-style:italic">'+ex+'</div>':''}
-    <div class="quiz-in"><input type="text" id="quizInput" placeholder="type the word or phrase" autocomplete="off"></div>
+    <div class="quiz-in"><input type="text" id="quizInput" placeholder="type the word or phrase" autocomplete="off" value="${done?esc(done.guess):""}" ${done?"disabled":""}></div>
     <div class="quiz-feedback" id="quizFb"></div>
-    <div class="stage-actions"><button class="btn sm" id="quizCheck">Check</button><button class="btn gold sm" id="quizNext" hidden>Next →</button></div>
+    <div class="stage-actions">
+      <button class="btn ghost sm" id="quizPrev" ${quizI===0?"disabled":""}>← Previous</button>
+      <button class="btn sm" id="quizCheck" ${done?"hidden":""}>Check</button>
+      <button class="btn gold sm" id="quizNext" ${done?"":"hidden"}>${quizI+1>=quizQ.length?"See score":"Next →"}</button>
+    </div>
     <div style="text-align:center;margin-top:6px"><span class="scorebar">${quizI+1} / ${quizQ.length}</span></div>
   </div>`;
-  const inp=document.getElementById("quizInput");inp.focus();
-  let answered=false;
+  const inp=document.getElementById("quizInput");
+  const fb=document.getElementById("quizFb");
+  function paint(ans){
+    if(ans.correct){fb.className="quiz-feedback qf-ok";fb.textContent="✓ Correct!";}
+    else{fb.className="quiz-feedback qf-no";fb.innerHTML="Answer: <b>"+esc(v.word)+"</b>"+(ans.guess?"":" (skipped)");}
+  }
+  if(done)paint(done);else inp.focus();
   function check(){
-    if(answered)return;answered=true;
+    if(quizAns[quizI])return;
     const guess=inp.value.trim().toLowerCase(),wf=formsOf(v);
     const accepted=[wf.head,...wf.forms,v.word].map(x=>String(x).trim().toLowerCase()).filter(Boolean);
-    const fb=document.getElementById("quizFb");
-    if(accepted.includes(guess)){quizScore++;fb.className="quiz-feedback qf-ok";fb.textContent="✓ Correct!";v.status="known";}
-    else{fb.className="quiz-feedback qf-no";fb.innerHTML="Answer: <b>"+esc(v.word)+"</b>"+(guess?"":" (skipped)");if(v.status==="new")v.status="review";}
-    save();renderVocab();
-    document.getElementById("quizCheck").hidden=true;document.getElementById("quizNext").hidden=false;document.getElementById("quizNext").focus();
+    const ans={guess:inp.value.trim(),correct:accepted.includes(guess)};
+    quizAns[quizI]=ans;
+    quizScore=quizAns.filter(x=>x&&x.correct).length;
+    if(ans.correct)v.status="known";else if(v.status==="new")v.status="review";
+    save();renderVocab();paint(ans);
+    inp.disabled=true;
+    document.getElementById("quizCheck").hidden=true;
+    const nx=document.getElementById("quizNext");nx.hidden=false;nx.focus();
     document.querySelector(".stage-head .scorebar").textContent="Score "+quizScore+" / "+quizQ.length;
   }
   document.getElementById("quizCheck").onclick=check;
-  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){if(answered)document.getElementById("quizNext").click();else check();}});
-  document.getElementById("quizNext").onclick=()=>{quizI++;if(quizI>=quizQ.length){const pct=Math.round(quizScore/quizQ.length*100);a.innerHTML='<div class="stage"><div style="text-align:center"><div class="scorebar" style="font-size:2rem">'+quizScore+' / '+quizQ.length+'</div><div style="margin-top:6px;color:var(--muted)">'+pct+'% this round</div><div style="margin-top:12px"><button class="btn sm" id="againQ">Play again</button></div></div></div>';document.getElementById("againQ").onclick=()=>document.getElementById("startQuiz").click();}else showQuiz();};
+  document.getElementById("quizPrev").onclick=()=>{if(quizI>0){quizI--;showQuiz();}};
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){if(quizAns[quizI])document.getElementById("quizNext").click();else check();}});
+  document.getElementById("quizNext").onclick=()=>{quizI++;if(quizI>=quizQ.length){const pct=Math.round(quizScore/quizQ.length*100);a.innerHTML='<div class="stage"><div style="text-align:center"><div class="scorebar" style="font-size:2rem">'+quizScore+' / '+quizQ.length+'</div><div style="margin-top:6px;color:var(--muted)">'+pct+'% this round</div><div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn ghost sm" id="backQ">← Previous</button><button class="btn sm" id="againQ">Play again</button></div></div></div>';document.getElementById("againQ").onclick=()=>document.getElementById("startQuiz").click();document.getElementById("backQ").onclick=()=>{quizI=quizQ.length-1;showQuiz();};}else showQuiz();};
 }
 
 
