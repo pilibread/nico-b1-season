@@ -614,9 +614,10 @@ input,select,textarea{min-width:0; max-width:100%}
       </div>
       <div class="practice-bar">
         <button class="btn gold sm" id="startFlash">🃏 Flashcards</button>
-        <label class="fromsel">start from <select id="flashFrom">
-          <option value="word">the word</option>
-          <option value="clue">the definition + example</option>
+        <label class="fromsel">show <select id="flashFrom">
+          <option value="def_ex">definition + example → word</option>
+          <option value="wd_def">word + definition → example</option>
+          <option value="ex_wd">example + word → definition</option>
         </select></label>
         <button class="btn gold sm" id="startQuiz">✏️ Quiz</button>
         <label style="display:flex; gap:6px; align-items:center; font-size:.85rem; color:var(--muted)"><input type="checkbox" id="onlyDue" style="width:auto" checked> only words to review</label>
@@ -795,7 +796,8 @@ function normalize(d){
   });
   d.resources=d.resources||[];
   d.settings=d.settings||{};
-  if(d.settings.flashFrom&&d.settings.flashFrom!=="word")d.settings.flashFrom="clue";  // was "example"/"meaning"
+  if(d.settings.flashFrom==="clue"||d.settings.flashFrom==="example"||d.settings.flashFrom==="meaning")d.settings.flashFrom="def_ex";
+  else if(d.settings.flashFrom==="word")d.settings.flashFrom="wd_def";
   return d;
 }
 function load(){
@@ -1213,19 +1215,28 @@ function blankWord(text,v){
 }
 function trainPool(){const only=document.getElementById("onlyDue").checked;let p=S.vocab.filter(v=>only?v.status!=="known":true);return p;}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-let flashQ=[],flashI=0,flashFrom="word";
+/* Two of the three sides are shown; the third is what the card reveals.
+   needs: the fields a word must have to be asked this way. */
+const FLASH_MODES={
+  def_ex:{head:"definition + example → word", ask:"Which word is this?", reveal:"", needs:["meaning","example"], either:true},
+  wd_def:{head:"word + definition → example", ask:"Use it in a sentence", reveal:"Example", needs:["meaning","example"]},
+  ex_wd:{head:"example + word → definition", ask:"What does it mean?", reveal:"Definition", needs:["example","meaning"]}
+};
+let flashQ=[],flashI=0,flashFrom="def_ex";
 document.getElementById("startFlash").onclick=()=>{
   const a=document.getElementById("trainArea");
   flashFrom=document.getElementById("flashFrom").value;
   S.settings.flashFrom=flashFrom;save();
+  const mode=FLASH_MODES[flashFrom]||FLASH_MODES.def_ex;
+  const has=(v,f)=>!!(v[f]||"").trim();
+  const fits=v=>mode.either?mode.needs.some(f=>has(v,f)):mode.needs.every(f=>has(v,f));
   let pool=trainPool();
-  const clue=flashFrom==="clue";
-  const short=clue?pool.filter(v=>!(v.meaning||"").trim()&&!(v.example||"").trim()).length:0;
-  if(clue)pool=pool.filter(v=>(v.meaning||"").trim()||(v.example||"").trim());
+  const short=pool.filter(v=>!fits(v)).length;
+  pool=pool.filter(fits);
   if(!pool.length){
-    a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">'+
-      (clue?'No words with a definition or an example to practise. Add them, start from the word, or untick "only words to review".'
-           :'No words to practise. Add some, or untick "only words to review".')+'</div></div>';
+    a.innerHTML='<div class="stage"><div style="text-align:center;color:var(--muted)">No words to practise this way. '+
+      (mode.either?'They need a definition or an example.':'They need both a definition and an example.')+
+      ' Add them, choose another combination, or untick "only words to review".</div></div>';
     return;
   }
   flashQ=shuffle(pool);flashI=0;showFlash(short);enterFocus();
@@ -1237,21 +1248,27 @@ function showFlash(short){
   const pos=posPill?`<div class="fpos">${posPill}</div>`:"";
   const word=`<div class="fw">${esc(head)}</div>`+(posPill?`<div class="fpos">${posPill}</div>`:"")+
     (forms.length?`<div class="fforms">${forms.map(esc).join(" · ")}</div>`:"");
-  const meaning=v.meaning?`<div class="fm">${blankWord(v.meaning,v)}</div>`:'<div class="fm">(no meaning saved)</div>';
-  const example=v.example?`<div class="fe">"${blankWord(v.example,v)}"</div>`:"";
+  // the word is only hidden when the card asks for it, so blanks appear only then
+  const defPlain=v.meaning?`<div class="fm">${esc(v.meaning)}</div>`:'<div class="fm day-none">(no definition saved)</div>';
+  const exPlain=v.example?`<div class="fe">"${esc(v.example)}"</div>`:'<div class="fe day-none">(no example saved)</div>';
+  const mode=FLASH_MODES[flashFrom]||FLASH_MODES.def_ex;
+  const label=t=>t?`<div class="flabel">${t}</div>`:"";
   let front,back;
-  if(flashFrom==="clue"){
-    front=pos+`<div class="flabel">Which word is this?</div>`+
+  if(flashFrom==="wd_def"){        // word + definition, reveal the example
+    front=word+defPlain+label(mode.ask);
+    back=label(mode.reveal)+exPlain;
+  }else if(flashFrom==="ex_wd"){   // example + word, reveal the definition
+    front=word+exPlain+label(mode.ask);
+    back=label(mode.reveal)+defPlain;
+  }else{                           // definition + example, reveal the word
+    front=pos+label(mode.ask)+
       (v.meaning?`<div class="fq">${blankWord(v.meaning,v)}</div>`:"")+
       (v.example?`<div class="fe">"${blankWord(v.example,v)}"</div>`:"");
     back=word;
-  }else{
-    front=word;
-    back=meaning+example;
   }
   a.innerHTML=`<div class="stage">
-    <div class="stage-head"><span>Flashcards · from ${flashFrom==="clue"?"the definition":"the word"}</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
-    ${short?`<div class="hint" style="text-align:center;margin-bottom:8px">${short} word${short===1?"":"s"} left out for having neither a definition nor an example.</div>`:""}
+    <div class="stage-head"><span>Flashcards · ${mode.head}</span><span class="scorebar">${flashI+1} / ${flashQ.length}</span></div>
+    ${short?`<div class="hint" style="text-align:center;margin-bottom:8px">${short} word${short===1?"":"s"} left out for missing a ${mode.either?"definition and an example":"definition or an example"}.</div>`:""}
     <div class="flash" id="flashEl"><div class="flash-inner">
       <div class="flash-face front">${front}<div class="tapme">tap to flip</div></div>
       <div class="flash-face back">${back}<div class="tapme">tap to flip</div></div>
@@ -1346,7 +1363,7 @@ document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(documen
 /* ----- init ----- */
 function renderAll(){renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderVocab();renderRes();}
 paperOptions();tagOptions();
-if(S.settings.flashFrom)document.getElementById("flashFrom").value=S.settings.flashFrom;
+if(S.settings.flashFrom&&FLASH_MODES[S.settings.flashFrom])document.getElementById("flashFrom").value=S.settings.flashFrom;
 document.getElementById("f_date").value=todayISO();
 if(TEACHER){document.body.classList.add("teacher");document.getElementById("teacherBar").hidden=false;document.title="Nico's B1 Season — teacher view";}
 renderAll();

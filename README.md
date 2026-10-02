@@ -16,7 +16,7 @@ The app is one self-contained file: **`nico-b1-season.html`**. No build step, no
 
 Starting a deck or a quiz puts it on the screen alone: `enterFocus()` adds `body.focus`, `#trainArea` becomes a fixed full-screen overlay above the header and tabs, and the only other thing on screen is a small ← Back button (`#focusBack`). Back or Escape leaves it and redraws the word list.
 
-Flashcards start either from the word (meaning and example on the back) or from the definition and example together, with the word on the back — remembered in `settings.flashFrom`. Wherever a meaning or example is the question, the word and its forms are blanked by `blankWord()`, which matches whole words only, so "as" doesn't blank the middle of "Almas" and "enjoy" leaves "enjoyable" alone.
+A flashcard shows two of the three sides and reveals the third, chosen in `FLASH_MODES` and remembered in `settings.flashFrom`: `def_ex` (definition + example → word), `wd_def` (word + definition → example, i.e. make your own sentence) and `ex_wd` (example + word → definition). Words missing a side a mode needs sit that round out, with a line saying how many. Wherever a meaning or example is the question, the word and its forms are blanked by `blankWord()`, which matches whole words only, so "as" doesn't blank the middle of "Almas" and "enjoy" leaves "enjoyable" alone.
 - **Practice**: curated practice links by skill, links added in the app, and "Copy my data / Paste to restore".
 
 ## How to run it
