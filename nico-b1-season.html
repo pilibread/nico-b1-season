@@ -126,6 +126,13 @@ main{padding:28px 0 70px}
 .mark span{position:absolute; top:-17px; left:50%; transform:translateX(-50%); font-size:.64rem; white-space:nowrap; font-weight:700; font-family:var(--disp); letter-spacing:.03em}
 .mockmark{position:absolute; top:0; bottom:0; border-left:2px dashed var(--faint)}
 .mockmark span{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:.62rem; color:var(--faint); white-space:nowrap}
+.reflog-wrap{margin-top:30px}
+.nlog{display:grid; gap:10px}
+.nlog-item{background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:var(--radius-sm); padding:11px 13px; cursor:pointer; text-align:left; width:100%; font:inherit; color:inherit}
+.nlog-item:hover{border-color:var(--line-strong); border-left-color:var(--gold)}
+.nlog-d{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.74rem; color:var(--muted); margin-bottom:5px; display:flex; gap:8px; flex-wrap:wrap}
+.nlog-d .done{color:var(--good)}
+.nlog-t{white-space:pre-wrap; overflow-wrap:anywhere; font-size:.95rem}
 .note-approx{color:var(--faint); font-size:.82rem; font-style:italic; margin-top:16px}
 
 /* ---------- forms ---------- */
@@ -530,6 +537,13 @@ input,select,textarea{min-width:0; max-width:100%}
         <div class="card pad" id="goalCard"></div>
       </div>
     </div>
+
+    <div class="reflog-wrap">
+      <div class="eyebrow">In his own words</div>
+      <h2 class="sec-title">Reflections</h2>
+      <p class="sec-desc">Everything written in the <b>Quick reflection or Summary of the Week</b> box in Training, newest first. Tap one to open that day and see what was practised.</p>
+      <div class="card pad"><div class="nlog" id="noteLog"></div></div>
+    </div>
   </section>
 
   <!-- LOG -->
@@ -577,8 +591,7 @@ input,select,textarea{min-width:0; max-width:100%}
           <div class="hm-legend"><span class="hm-hint">Tap any day to tick what you did — even days you missed · <b></b> = reflection</span>Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
         </div>
         <div class="card pad" style="margin-top:20px">
-          <div class="card-head">Quick reflection</div>
-          <div class="card-sub">One line, only if you want to<span class="savedtick" id="noteSaved" hidden>saved ✓</span></div>
+          <div class="card-head">Quick reflection or Summary of the Week<span class="savedtick" id="noteSaved" hidden>saved ✓</span></div>
           <textarea class="daynote" id="dayNote" style="margin-top:12px" placeholder="How did practice feel today?"></textarea>
         </div>
       </div>
@@ -1026,8 +1039,22 @@ document.addEventListener("keydown",e=>{
   if(dayOpen)closeDay();else exitFocus();
 });
 function renderNote(){document.getElementById("dayNote").value=S.dayNotes[todayISO()]||"";}
+/* The reflections as a log, newest first, on the Player Card tab. */
+const REFLOG_MAX=40;
+function renderNoteLog(){
+  const box=document.getElementById("noteLog"),today=todayISO();
+  const days=Object.keys(S.dayNotes).filter(k=>(S.dayNotes[k]||"").trim()).sort().reverse();
+  if(!days.length){box.innerHTML='<div class="empty">No reflections yet. They appear here as Nico writes them in Training.</div>';return;}
+  const shown=days.slice(0,REFLOG_MAX);
+  box.innerHTML=shown.map(k=>{
+    const d=new Date(k),cnt=S.habits[k]?Object.keys(S.habits[k]).length:0;
+    const when=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+    return `<button class="nlog-item" data-note="${k}"><div class="nlog-d"><span>${when}${k===today?" · today":""}</span>${cnt?`<span class="done">${cnt} practised</span>`:""}</div><div class="nlog-t">${esc(S.dayNotes[k])}</div></button>`;
+  }).join("")+(days.length>shown.length?`<div class="hint">Showing the ${REFLOG_MAX} most recent of ${days.length}.</div>`:"");
+  box.querySelectorAll("[data-note]").forEach(b=>b.onclick=()=>openDay(b.dataset.note));
+}
 let noteTimer=null;
-document.getElementById("dayNote").addEventListener("input",e=>{const k=todayISO(),v=e.target.value;const had=!!(S.dayNotes[k]&&S.dayNotes[k].trim());if(v.trim())S.dayNotes[k]=v;else delete S.dayNotes[k];save();if(had!==!!v.trim())renderHeatmap();const tick=document.getElementById("noteSaved");tick.hidden=false;clearTimeout(noteTimer);noteTimer=setTimeout(()=>tick.hidden=true,1500);});
+document.getElementById("dayNote").addEventListener("input",e=>{const k=todayISO(),v=e.target.value;const had=!!(S.dayNotes[k]&&S.dayNotes[k].trim());if(v.trim())S.dayNotes[k]=v;else delete S.dayNotes[k];save();renderNoteLog();if(had!==!!v.trim())renderHeatmap();const tick=document.getElementById("noteSaved");tick.hidden=false;clearTimeout(noteTimer);noteTimer=setTimeout(()=>tick.hidden=true,1500);});
 
 
 
@@ -1361,7 +1388,7 @@ document.getElementById("showRestore").onclick=()=>{const r=document.getElementB
 document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
-function renderAll(){renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderVocab();renderRes();}
+function renderAll(){renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderNoteLog();renderVocab();renderRes();}
 paperOptions();tagOptions();
 if(S.settings.flashFrom&&FLASH_MODES[S.settings.flashFrom])document.getElementById("flashFrom").value=S.settings.flashFrom;
 document.getElementById("f_date").value=todayISO();
