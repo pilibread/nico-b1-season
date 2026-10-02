@@ -107,11 +107,11 @@ main{padding:28px 0 70px}
 .fut-stat.na .v,.fut-stat.na .k{opacity:.45}
 .fut-foot{margin-top:12px; font-family:var(--body); font-size:.72rem; font-weight:600; text-align:center; opacity:.75}
 
-.next-obj{margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius); padding:16px}
-.next-obj h3{font-family:var(--disp); text-transform:uppercase; letter-spacing:.05em; font-size:1.05rem; margin-bottom:10px}
-.obj-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:.9rem}
-.obj-row:last-child{border-bottom:none}
-.obj-row .rt{font-family:var(--disp); font-weight:800; font-size:1.15rem}
+.aim{margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--green); border-radius:var(--radius); padding:16px}
+.aim-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+.aim-week{font-family:var(--disp); font-weight:700; letter-spacing:.05em; text-transform:uppercase; font-size:.74rem; color:var(--muted); white-space:nowrap}
+.aimbox{border:1px dashed var(--line-strong); background:var(--surface); border-radius:10px; padding:11px 13px; width:100%; font-family:inherit; font-size:1rem; color:var(--ink); resize:vertical; min-height:74px; line-height:1.5}
+.aimbox:focus{outline:2px solid var(--green); outline-offset:1px; border-color:var(--green)}
 
 /* ---------- goals bars ---------- */
 .goal{padding:16px 0; border-bottom:1px solid var(--line)}
@@ -506,7 +506,7 @@ input,select,textarea{min-width:0; max-width:100%}
     </div>
   </div>
 </div></header>
-<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except adding words.</div>
+<div class="teacher-bar" id="teacherBar" hidden>Teacher view — Nico's live data. Read-only, except the week's aim and adding words.</div>
 
 <nav class="tabs"><div class="wrap" id="tabbar">
   <button class="tab active" data-tab="overview"><span class="t-full">Player Card</span><span class="t-short">Card</span></button>
@@ -523,11 +523,12 @@ input,select,textarea{min-width:0; max-width:100%}
     <div class="grid2">
       <div>
         <div class="fut" id="futCard"></div>
-        <div class="next-obj">
-          <h3>Ratings to unlock</h3>
-          <div class="obj-row"><span>Pass zone — a comfortable B1</span><span class="rt" style="color:var(--gold)">≈ 62 OVR</span></div>
-          <div class="obj-row"><span>Flying colours — a strong pass</span><span class="rt" style="color:var(--green)">≈ 77 OVR</span></div>
-          <p class="hint" style="margin-top:10px">Rating = your average score over your last five papers of that kind, out of 99. Keep beating the mock and the card levels up: bronze → silver → gold.</p>
+        <div class="aim">
+          <div class="aim-top">
+            <div class="card-head">Aim for the week<span class="savedtick" id="aimSaved" hidden>saved ✓</span></div>
+            <span class="aim-week" id="aimWeek"></span>
+          </div>
+          <textarea class="aimbox" id="weekAim" placeholder="What are we going for this week? e.g. Reading Part 4 twice, and 20 new words."></textarea>
         </div>
       </div>
       <div>
@@ -809,6 +810,7 @@ function normalize(d){
   });
   d.resources=d.resources||[];
   d.settings=d.settings||{};
+  d.settings.aims=d.settings.aims||{};        // one aim per week, keyed by that week's Monday
   if(d.settings.flashFrom==="clue"||d.settings.flashFrom==="example"||d.settings.flashFrom==="meaning")d.settings.flashFrom="def_ex";
   else if(d.settings.flashFrom==="word")d.settings.flashFrom="wd_def";
   return d;
@@ -1039,6 +1041,22 @@ document.addEventListener("keydown",e=>{
   if(dayOpen)closeDay();else exitFocus();
 });
 function renderNote(){document.getElementById("dayNote").value=S.dayNotes[todayISO()]||"";}
+/* ----- aim for the week ----- */
+function weekKey(d){const x=new Date(d||todayISO());x.setUTCDate(x.getUTCDate()-((x.getUTCDay()+6)%7));return x.toISOString().slice(0,10);}
+function renderAim(){
+  const k=weekKey(),mon=new Date(k),sun=new Date(k);sun.setUTCDate(sun.getUTCDate()+6);
+  const f=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+  document.getElementById("aimWeek").textContent=f(mon)+" – "+f(sun);
+  document.getElementById("weekAim").value=S.settings.aims[k]||"";
+}
+let aimTimer=null;
+document.getElementById("weekAim").addEventListener("input",e=>{
+  const k=weekKey(),v=e.target.value;
+  if(v.trim())S.settings.aims[k]=v;else delete S.settings.aims[k];
+  save();
+  const tick=document.getElementById("aimSaved");tick.hidden=false;
+  clearTimeout(aimTimer);aimTimer=setTimeout(()=>tick.hidden=true,1500);
+});
 /* The reflections as a log, newest first, on the Player Card tab. */
 const REFLOG_MAX=40;
 function renderNoteLog(){
@@ -1388,7 +1406,7 @@ document.getElementById("showRestore").onclick=()=>{const r=document.getElementB
 document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
-function renderAll(){renderCount();renderCard();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderNoteLog();renderVocab();renderRes();}
+function renderAll(){renderCount();renderCard();renderAim();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderNoteLog();renderVocab();renderRes();}
 paperOptions();tagOptions();
 if(S.settings.flashFrom&&FLASH_MODES[S.settings.flashFrom])document.getElementById("flashFrom").value=S.settings.flashFrom;
 document.getElementById("f_date").value=todayISO();
