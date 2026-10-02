@@ -421,6 +421,9 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .day-list li::before{content:"✓"; flex:none; width:22px; height:22px; border-radius:6px; background:linear-gradient(135deg,var(--green),var(--green-deep)); color:#04170f; font-weight:900; font-size:.8rem; display:flex; align-items:center; justify-content:center}
 .day-list .t{flex:1; min-width:0}
 .day-list .tg{font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:.72rem; color:var(--faint); white-space:nowrap}
+.day-box .week-list .wrow{padding:10px 2px}
+.day-box .week-list .wlabel{font-size:.95rem}
+.teacher .day-box .chk{pointer-events:none}
 .day-note{background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:var(--radius-sm); padding:10px 12px; white-space:pre-wrap; overflow-wrap:anywhere}
 .day-none{color:var(--faint); font-style:italic; font-size:.92rem}
 .daynote{border:1px dashed var(--line-strong); background:var(--surface-2); border-radius:10px; padding:12px 14px; width:100%; font-family:inherit; color:var(--ink); resize:vertical; min-height:48px; font-size:.95rem; line-height:1.5}
@@ -571,7 +574,7 @@ input,select,textarea{min-width:0; max-width:100%}
           </div>
           <div class="hm-head"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
           <div class="hm-grid" id="hmGrid"></div>
-          <div class="hm-legend"><span class="hm-hint">Tap a day to see what was done · <b></b> = reflection</span>Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
+          <div class="hm-legend"><span class="hm-hint">Tap any day to tick what you did — even days you missed · <b></b> = reflection</span>Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
         </div>
         <div class="card pad" style="margin-top:20px">
           <div class="card-head">Quick reflection</div>
@@ -967,9 +970,9 @@ function renderHeatmap(){
   const grid=document.getElementById("hmGrid");grid.innerHTML="";
   for(let i=0;i<WEEKS*7;i++){const d=new Date(base);d.setUTCDate(base.getUTCDate()+i);const k=iso(d);
     const cnt=S.habits[k]?Object.keys(S.habits[k]).length:0;const lvl=cnt===0?0:cnt===1?1:cnt===2?2:3;
-    const note=!!(S.dayNotes[k]&&S.dayNotes[k].trim()),open=cnt>0||note;
+    const note=!!(S.dayNotes[k]&&S.dayNotes[k].trim()),open=k<=today;   // past and today can be ticked
     const cell=document.createElement("div");cell.className="hm-cell l"+lvl+(k===today?" today":"")+(open?" open":"");if(k>today)cell.style.opacity=".3";
-    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})+(cnt?` · ${cnt} done`:"")+(note?" · reflection":"");
+    cell.title=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})+(cnt?` · ${cnt} done`:"")+(note?" · reflection":"")+(k<=today?" · tap to tick":"");
     cell.innerHTML=`<span class="hm-d">${d.getUTCDate()}</span>${note?'<span class="hm-note"></span>':''}`;
     if(open){cell.tabIndex=0;cell.setAttribute("role","button");cell.onclick=()=>openDay(k);cell.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDay(k);}};}
     grid.appendChild(cell);}
@@ -980,17 +983,29 @@ function renderHeatmap(){
 
 /* ----- day pop-up: what was ticked and the reflection for one calendar day ----- */
 let dayOpen=null,dayOpener=null;
+function toggleDayHabit(k,id){
+  if(TEACHER)return;                      // the teacher view only reads
+  S.habits[k]=S.habits[k]||{};
+  if(S.habits[k][id])delete S.habits[k][id];else S.habits[k][id]=true;
+  if(!Object.keys(S.habits[k]).length)delete S.habits[k];
+  save();renderWeek();renderHeatmap();   // renderHeatmap redraws this pop-up too
+}
 function fillDay(k){
-  const d=new Date(k);
-  document.getElementById("dayTitle").textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
-  const ids=Object.keys(S.habits[k]||{});
-  const items=ids.map(id=>{const sg=S.suggestions.find(x=>x.id===id);return sg?`<li><span class="t">${esc(sg.text)}</span>${sg.tag?`<span class="tg">${esc(sg.tag)}</span>`:""}</li>`:`<li><span class="t day-none">An activity that has since been removed</span></li>`;}).join("");
+  const d=new Date(k),today=todayISO();
+  document.getElementById("dayTitle").textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})+(k===today?" · today":"");
+  const done=S.habits[k]||{},ticked=Object.keys(done);
+  // every activity, so a day you forgot can be filled in later
+  const rows=S.suggestions.map(sg=>`<div class="wrow"><div class="chk ${done[sg.id]?"on":""}" data-daytick="${sg.id}"></div><div class="wlabel">${esc(sg.text)}</div>${sg.tag?`<span class="wtag" style="border:none;background:none;padding:0">${esc(sg.tag)}</span>`:""}</div>`).join("");
+  // anything ticked that day whose activity has since been removed from the list
+  const gone=ticked.filter(id=>!S.suggestions.some(x=>x.id===id));
   const note=(S.dayNotes[k]||"").trim();
   document.getElementById("dayBody").innerHTML=
-    `<div class="day-sec">Practised${ids.length?` · ${ids.length}`:""}</div>`+
-    (ids.length?`<ul class="day-list">${items}</ul>`:`<div class="day-none">Nothing ticked this day.</div>`)+
+    `<div class="day-sec">Practised · ${ticked.length}</div>`+
+    (S.suggestions.length?`<div class="week-list">${rows}</div>`:`<div class="day-none">No activities in the list yet.</div>`)+
+    (gone.length?`<div class="day-none" style="margin-top:8px">${gone.length} more ticked that day, from activities since removed.</div>`:"")+
     `<div class="day-sec">Reflection</div>`+
-    (note?`<div class="day-note">${esc(note)}</div>`:`<div class="day-none">No reflection written.</div>`);
+    (note?`<div class="day-note">${esc(note)}</div>`:`<div class="day-none">No reflection written${k===today?" — the box under the calendar writes today's":""}.</div>`);
+  document.getElementById("dayBody").querySelectorAll("[data-daytick]").forEach(c=>c.onclick=()=>toggleDayHabit(k,c.dataset.daytick));
 }
 function openDay(k){
   dayOpen=k;dayOpener=document.activeElement;fillDay(k);
