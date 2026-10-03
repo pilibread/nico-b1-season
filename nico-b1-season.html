@@ -107,6 +107,13 @@ main{padding:28px 0 70px}
 .fut-stat.na .v,.fut-stat.na .k{opacity:.45}
 .fut-foot{margin-top:12px; font-family:var(--body); font-size:.72rem; font-weight:600; text-align:center; opacity:.75}
 
+.folder{margin-top:12px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-2)}
+.folder summary{padding:11px 14px; cursor:pointer; font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:.84rem; color:var(--muted); list-style:none}
+.folder summary::-webkit-details-marker{display:none}
+.folder summary::after{content:" ▾"; color:var(--green)}
+.folder[open] summary::after{content:" ▴"}
+.folder>div{padding:0 14px 14px}
+.folder .backup{background:none; border:none; padding:0; margin:0}
 .nextup{margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--below); border-radius:var(--radius); padding:16px}
 .nextup .nu-why{color:var(--muted); font-size:.88rem; margin:6px 0 12px}
 .nextup a{display:block; background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:12px 14px; text-decoration:none; color:var(--ink)}
@@ -362,7 +369,7 @@ details.scard[open] summary .arw{transform:rotate(90deg)}
 .sync.saving::before{background:var(--warn)}
 .sync.error::before,.sync.offline::before{background:var(--below)}
 .teacher-bar{background:linear-gradient(90deg,var(--gold),var(--gold-deep)); color:var(--bg); font-weight:600; font-size:.9rem; text-align:center; padding:8px 20px}
-.teacher .log-form,.teacher #addResult,.teacher .practice-bar,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
+.teacher .log-form,.teacher #addResult,.teacher .practice-bar,.teacher .folder .backup,.teacher .add-res,.teacher .backup,.teacher .sug-add,.teacher .daynote,.teacher .del{display:none!important}
 .teacher .chk,.teacher .chip,.teacher .wlabel{pointer-events:none}
 
 @media (max-width:860px){
@@ -520,7 +527,6 @@ input,select,textarea{min-width:0; max-width:100%}
   <button class="tab" data-tab="log"><span class="t-full">Match Log</span><span class="t-short">Log</span></button>
   <button class="tab" data-tab="training">Training</button>
   <button class="tab" data-tab="vocab"><span class="t-full">Vocabulary</span><span class="t-short">Words</span><span class="badge" id="vBadge" hidden></span></button>
-  <button class="tab" data-tab="practice">Practice</button>
 </div></nav>
 
 <main class="wrap">
@@ -542,24 +548,35 @@ input,select,textarea{min-width:0; max-width:100%}
       <div>
         <div class="eyebrow">The targets</div>
         <h2 class="sec-title">Two lines to beat</h2>
-        <p class="sec-desc">On every practice paper, aim past the <b>pass zone</b> and towards <b>flying colours</b>. Each bar shows your average over your last five papers of that kind. The dashed line is the June mock — where the season starts. Log a new test and the bars move.</p>
-        <div class="card pad" id="goalCard"></div>
+            <div class="card pad" id="goalCard"></div>
       </div>
     </div>
 
     <div class="reflog-wrap">
       <div class="eyebrow">In his own words</div>
       <h2 class="sec-title">Reflections</h2>
-      <p class="sec-desc">Everything written in the <b>Quick reflection or Summary of the Week</b> box in Training, newest first. Tap one to open that day and see what was practised.</p>
       <div class="card pad"><div class="nlog" id="noteLog"></div></div>
     </div>
+
+    <details class="folder"><summary>More practice links</summary><div id="resArea"></div></details>
+    <details class="folder"><summary>Back up my progress</summary>
+          <div class="backup">
+            <p id="backupText">A spare copy of everything, in case you need it.</p>
+            <div class="row">
+              <button class="btn ghost sm" id="copyData">Copy my data</button>
+              <button class="btn ghost sm" id="showRestore">Paste to restore</button>
+              <span class="hint" id="copyMsg"></span>
+            </div>
+            <div id="restoreArea" hidden><textarea id="restoreBox" placeholder="Paste your copied data here…"></textarea><div style="margin-top:8px"><button class="btn sm" id="doRestore">Restore from this</button></div></div>
+          </div>
+    </details>
+
   </section>
 
   <!-- LOG -->
   <section class="panel" data-panel="log" hidden>
     <div class="eyebrow">Every result counts</div>
     <h2 class="sec-title">Match log</h2>
-    <p class="sec-desc">Log each paper on its own, with a note on how it went. Your player card and the target bars update from your latest score in each paper.</p>
     <div class="card pad">
       <div class="log-form">
         <label class="fld">Paper<select id="f_paper"></select></label>
@@ -577,13 +594,11 @@ input,select,textarea{min-width:0; max-width:100%}
   <section class="panel" data-panel="training" hidden>
     <div class="eyebrow">Little and often</div>
     <h2 class="sec-title">Training</h2>
-    <p class="sec-desc">Tick what you practised today — your choice, your pace. The calendar fills in and the streak grows the more days you show up. Edit the suggestions to match what you're working on.</p>
     <div class="train-grid">
       <div class="card pad">
-        <div class="card-head">This week's practice</div>
-        <div class="card-sub">Tick what you did. Tap a name to rename it, or its category to change it.</div>
+        <div class="consist-head"><div class="card-head">This week's practice</div><button class="linkbtn" id="sugEdit">Edit list</button></div>
         <div class="week-list" id="weekList" style="margin-top:12px"></div>
-        <div class="sug-add">
+        <div class="sug-add" id="sugAdd" hidden>
           <input type="text" id="sugText" placeholder="Add a suggestion… (e.g. 15 min of writing)">
           <select id="sugTag"></select>
           <button class="btn sm" id="addSug">Add</button>
@@ -597,7 +612,7 @@ input,select,textarea{min-width:0; max-width:100%}
           </div>
           <div class="hm-head"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
           <div class="hm-grid" id="hmGrid"></div>
-          <div class="hm-legend"><span class="hm-hint">Tap any day to tick what you did — even days you missed · <b></b> = reflection</span>Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
+          <div class="hm-legend"><span class="hm-hint">Tap any day to tick it · <b></b> reflection</span>Less <i style="background:var(--surface-3)"></i><i style="background:#1f5b47"></i><i style="background:#1f9268"></i><i style="background:var(--green)"></i> More</div>
         </div>
         <div class="card pad" style="margin-top:20px">
           <div class="card-head">Quick reflection or Summary of the Week<span class="savedtick" id="noteSaved" hidden>saved ✓</span></div>
@@ -611,7 +626,6 @@ input,select,textarea{min-width:0; max-width:100%}
   <section class="panel" data-panel="vocab" hidden>
     <div class="eyebrow">Your biggest win</div>
     <h2 class="sec-title">Vocabulary</h2>
-    <p class="sec-desc">Add words you meet, with a short meaning and an example — one at a time, or a whole spreadsheet at once. Mark each <b>New</b>, <b>Review</b> or <b>Known</b>, then train them with flashcards or a quiz.</p>
     <div class="card pad">
       <div class="vocab-add">
         <label class="fld">Word / phrase<input type="text" id="v_word" placeholder="give up"></label>
@@ -622,7 +636,7 @@ input,select,textarea{min-width:0; max-width:100%}
       </div>
       <div class="vimport">
         <div class="vi-head">Add many words from a spreadsheet</div>
-        <p class="hint">One word per row, in three columns: <b>word</b>, <b>meaning</b>, <b>example</b> (the example can be left empty). A first row of column titles is ignored, and words already in the bank are skipped. In Excel or Google Sheets, save or download the sheet as <b>CSV</b> — or just copy the cells and paste them here.</p>
+        <p class="hint">Three columns: <b>word</b>, <b>meaning</b>, <b>example</b>. Save the sheet as <b>CSV</b>, or copy the cells and paste them here.</p>
         <div class="vi-row">
           <label class="btn ghost sm" for="vocabFile">Choose a CSV file</label>
           <input type="file" id="vocabFile" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" hidden>
@@ -651,22 +665,6 @@ input,select,textarea{min-width:0; max-width:100%}
   </section>
 
   <!-- PRACTICE -->
-  <section class="panel" data-panel="practice" hidden>
-    <div class="eyebrow">Where to train</div>
-    <h2 class="sec-title">Practice ground</h2>
-    <p class="sec-desc">Free, reliable practice by skill. Add your own links at the bottom of each group — the teacher's materials go here too.</p>
-    <div id="resArea"></div>
-    <div class="backup">
-      <h3>Back up your progress</h3>
-      <p id="backupText">Your log, words, habits and homework are saved in this browser only. To keep a copy or move to another device, copy your data, save it somewhere safe, and paste it back when you need it.</p>
-      <div class="row">
-        <button class="btn ghost sm" id="copyData">Copy my data</button>
-        <button class="btn ghost sm" id="showRestore">Paste to restore</button>
-        <span class="hint" id="copyMsg"></span>
-      </div>
-      <div id="restoreArea" hidden><textarea id="restoreBox" placeholder="Paste your copied data here…"></textarea><div style="margin-top:8px"><button class="btn sm" id="doRestore">Restore from this</button></div></div>
-    </div>
-  </section>
 </main>
 
 <button class="focus-back" id="focusBack" hidden>← Back</button>
@@ -861,7 +859,7 @@ function cloudInit(){
   }catch(e){cloudRef=null;setSync("error",e.message);return;}
   setSync("connecting");
   const firstAnswer=setTimeout(()=>{if(!cloudReady)setSync("offline","Can't reach the cloud yet. Everything is still saved on this device and will sync when it connects.");},8000);
-  document.getElementById("backupText").textContent="Your progress syncs automatically, so it is the same on every device. Copy and paste are still here if you want a spare copy.";
+  document.getElementById("backupText").textContent="Everything syncs automatically. This is just a spare copy.";
   cloudRef.onSnapshot(snap=>{
     if(snap.metadata.hasPendingWrites)return;          // our own write echoing back
     if(snap.metadata.fromCache&&!snap.exists)return;   // offline and nothing cached: not an answer yet
@@ -948,7 +946,7 @@ function renderGoals(){
     wrap.appendChild(g);
   });
   const n=document.createElement("div");n.className="goal";
-  n.innerHTML=`<p class="note-approx">Each mark is the average of your last ${FORM_N} papers of that kind, so one bad day doesn't sink the card and one lucky day doesn't flatter it. Raw-mark targets are a working guide, not Cambridge's official conversion (that scaled score isn't published). Roughly 60% of a paper's marks = the pass zone; about 75%+ = a strong pass.</p>`;
+  n.innerHTML=`<p class="note-approx">Each mark is the average of your last ${FORM_N} papers of that kind. The targets are a working guide, not Cambridge's official conversion.</p>`;
   wrap.appendChild(n);
 }
 
@@ -973,16 +971,21 @@ function refreshScores(){renderCard();renderGoals();renderLog();}
 
 /* ----- training: suggestions + consistency + note ----- */
 function tagOptions(){document.getElementById("sugTag").innerHTML=TAGS.map(t=>`<option>${t}</option>`).join("");}
+let sugEditing=false;
+document.getElementById("sugEdit").onclick=()=>{sugEditing=!sugEditing;renderWeek();};
 function renderWeek(){
   const today=todayISO(),done=S.habits[today]||{};
   const l=document.getElementById("weekList");l.innerHTML="";
   if(!S.suggestions.length)l.innerHTML='<div class="empty">No suggestions yet — add one below.</div>';
   S.suggestions.forEach(s=>{
     const on=!!done[s.id];const row=document.createElement("div");row.className="wrow";
-    row.innerHTML=`<div class="chk ${on?'on':''}" data-tick="${s.id}"></div><div class="wlabel" data-rename="${s.id}">${esc(s.text)}</div><select class="wtag" data-stag="${s.id}" aria-label="Category" ${TEACHER?'disabled':''}>${(TAGS.includes(s.tag)||!s.tag?TAGS:[s.tag,...TAGS]).map(t=>`<option${t===s.tag?' selected':''}>${esc(t)}</option>`).join("")}</select><button class="del" data-sdel="${s.id}">✕</button>`;
+    row.innerHTML=`<div class="chk ${on?'on':''}" data-tick="${s.id}"></div><div class="wlabel" ${sugEditing?`data-rename="${s.id}"`:""}>${esc(s.text)}</div>`+
+      (sugEditing?`<select class="wtag" data-stag="${s.id}" aria-label="Category" ${TEACHER?'disabled':''}>${(TAGS.includes(s.tag)||!s.tag?TAGS:[s.tag,...TAGS]).map(t=>`<option${t===s.tag?' selected':''}>${esc(t)}</option>`).join("")}</select><button class="del" data-sdel="${s.id}">✕</button>`:"");
     l.appendChild(row);
   });
   l.querySelectorAll("[data-tick]").forEach(c=>c.onclick=()=>{const id=c.dataset.tick;toggleDayHabit(today,id);});
+  document.getElementById("sugAdd").hidden=!sugEditing;
+  document.getElementById("sugEdit").textContent=sugEditing?"Done":"Edit list";
   l.querySelectorAll("[data-stag]").forEach(sel=>sel.onchange=()=>{const sg=S.suggestions.find(x=>x.id===sel.dataset.stag);if(!sg)return;sg.tag=sel.value;save();renderWeek();});
   l.querySelectorAll("[data-sdel]").forEach(b=>b.onclick=()=>{const sg=S.suggestions.find(x=>x.id===b.dataset.sdel);if(!sg||!confirm(`Remove "${sg.text}" from the list?`))return;S.suggestions=S.suggestions.filter(x=>x.id!==sg.id);save();renderWeek();renderHeatmap();});
   l.querySelectorAll("[data-rename]").forEach(el=>el.onclick=()=>{const s=S.suggestions.find(x=>x.id===el.dataset.rename);const v=prompt("Edit suggestion:",s.text);if(v&&v.trim()){s.text=v.trim();save();renderWeek();}});
