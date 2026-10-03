@@ -107,6 +107,13 @@ main{padding:28px 0 70px}
 .fut-stat.na .v,.fut-stat.na .k{opacity:.45}
 .fut-foot{margin-top:12px; font-family:var(--body); font-size:.72rem; font-weight:600; text-align:center; opacity:.75}
 
+.nextup{margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--below); border-radius:var(--radius); padding:16px}
+.nextup .nu-why{color:var(--muted); font-size:.88rem; margin:6px 0 12px}
+.nextup a{display:block; background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:12px 14px; text-decoration:none; color:var(--ink)}
+.nextup a:hover{border-color:var(--green)}
+.nextup .nu-name{font-weight:600; display:block}
+.nextup .nu-desc{color:var(--muted); font-size:.85rem; display:block; margin-top:3px}
+.nextup .nu-meta{color:var(--faint); font-size:.78rem; display:block; margin-top:5px}
 .aim{margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--green); border-radius:var(--radius); padding:16px}
 .aim-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px}
 .aim-week{font-family:var(--disp); font-weight:700; letter-spacing:.05em; text-transform:uppercase; font-size:.74rem; color:var(--muted); white-space:nowrap}
@@ -523,6 +530,7 @@ input,select,textarea{min-width:0; max-width:100%}
     <div class="grid2">
       <div>
         <div class="fut" id="futCard"></div>
+        <div class="nextup" id="nextUp"></div>
         <div class="aim">
           <div class="aim-top">
             <div class="card-head">Aim for the week<span class="savedtick" id="aimSaved" hidden>saved ✓</span></div>
@@ -974,7 +982,7 @@ function renderWeek(){
     row.innerHTML=`<div class="chk ${on?'on':''}" data-tick="${s.id}"></div><div class="wlabel" data-rename="${s.id}">${esc(s.text)}</div><select class="wtag" data-stag="${s.id}" aria-label="Category" ${TEACHER?'disabled':''}>${(TAGS.includes(s.tag)||!s.tag?TAGS:[s.tag,...TAGS]).map(t=>`<option${t===s.tag?' selected':''}>${esc(t)}</option>`).join("")}</select><button class="del" data-sdel="${s.id}">✕</button>`;
     l.appendChild(row);
   });
-  l.querySelectorAll("[data-tick]").forEach(c=>c.onclick=()=>{const id=c.dataset.tick;S.habits[today]=S.habits[today]||{};if(S.habits[today][id])delete S.habits[today][id];else S.habits[today][id]=true;if(!Object.keys(S.habits[today]).length)delete S.habits[today];save();renderWeek();renderHeatmap();});
+  l.querySelectorAll("[data-tick]").forEach(c=>c.onclick=()=>{const id=c.dataset.tick;toggleDayHabit(today,id);});
   l.querySelectorAll("[data-stag]").forEach(sel=>sel.onchange=()=>{const sg=S.suggestions.find(x=>x.id===sel.dataset.stag);if(!sg)return;sg.tag=sel.value;save();renderWeek();});
   l.querySelectorAll("[data-sdel]").forEach(b=>b.onclick=()=>{const sg=S.suggestions.find(x=>x.id===b.dataset.sdel);if(!sg||!confirm(`Remove "${sg.text}" from the list?`))return;S.suggestions=S.suggestions.filter(x=>x.id!==sg.id);save();renderWeek();renderHeatmap();});
   l.querySelectorAll("[data-rename]").forEach(el=>el.onclick=()=>{const s=S.suggestions.find(x=>x.id===el.dataset.rename);const v=prompt("Edit suggestion:",s.text);if(v&&v.trim()){s.text=v.trim();save();renderWeek();}});
@@ -1000,10 +1008,20 @@ function renderHeatmap(){
 
 /* ----- day pop-up: what was ticked and the reflection for one calendar day ----- */
 let dayOpen=null,dayOpener=null;
+/* What a tick was called on the day it was ticked. Ticks used to be stored as `true`;
+   they now store the wording, so renaming or deleting an activity later leaves the past
+   alone. A string is truthy, so older data still counts. */
+function tickLabel(k,id){
+  const v=(S.habits[k]||{})[id];
+  if(typeof v==="string"&&v.trim())return v;
+  const sg=S.suggestions.find(x=>x.id===id);
+  return sg?sg.text:"An activity that has since been removed";
+}
 function toggleDayHabit(k,id){
   if(TEACHER)return;                      // the teacher view only reads
   S.habits[k]=S.habits[k]||{};
-  if(S.habits[k][id])delete S.habits[k][id];else S.habits[k][id]=true;
+  if(S.habits[k][id])delete S.habits[k][id];
+  else{const sg=S.suggestions.find(x=>x.id===id);S.habits[k][id]=sg?sg.text:true;}
   if(!Object.keys(S.habits[k]).length)delete S.habits[k];
   save();renderWeek();renderHeatmap();   // renderHeatmap redraws this pop-up too
 }
@@ -1012,14 +1030,15 @@ function fillDay(k){
   document.getElementById("dayTitle").textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})+(k===today?" · today":"");
   const done=S.habits[k]||{},ticked=Object.keys(done);
   // every activity, so a day you forgot can be filled in later
-  const rows=S.suggestions.map(sg=>`<div class="wrow"><div class="chk ${done[sg.id]?"on":""}" data-daytick="${sg.id}"></div><div class="wlabel">${esc(sg.text)}</div>${sg.tag?`<span class="wtag" style="border:none;background:none;padding:0">${esc(sg.tag)}</span>`:""}</div>`).join("");
-  // anything ticked that day whose activity has since been removed from the list
   const gone=ticked.filter(id=>!S.suggestions.some(x=>x.id===id));
+  const line=(id,label,tag,on)=>`<div class="wrow"><div class="chk ${on?"on":""}" data-daytick="${id}"></div><div class="wlabel">${esc(label)}</div>${tag?`<span class="wtag" style="border:none;background:none;padding:0">${esc(tag)}</span>`:""}</div>`;
+  const rows=S.suggestions.map(sg=>line(sg.id,done[sg.id]?tickLabel(k,sg.id):sg.text,sg.tag,!!done[sg.id])).join("")+
+    gone.map(id=>line(id,tickLabel(k,id),"",true)).join("");
   const note=(S.dayNotes[k]||"").trim();
   document.getElementById("dayBody").innerHTML=
     `<div class="day-sec">Practised · ${ticked.length}</div>`+
     (S.suggestions.length?`<div class="week-list">${rows}</div>`:`<div class="day-none">No activities in the list yet.</div>`)+
-    (gone.length?`<div class="day-none" style="margin-top:8px">${gone.length} more ticked that day, from activities since removed.</div>`:"")+
+    (gone.length?`<div class="day-none" style="margin-top:8px">The last ${gone.length===1?"one is":gone.length+" are"} no longer on the list.</div>`:"")+
     `<div class="day-sec">Reflection</div>`+
     (note?`<div class="day-note">${esc(note)}</div>`:`<div class="day-none">No reflection written${k===today?" — the box under the calendar writes today's":""}.</div>`);
   document.getElementById("dayBody").querySelectorAll("[data-daytick]").forEach(c=>c.onclick=()=>toggleDayHabit(k,c.dataset.daytick));
@@ -1041,6 +1060,29 @@ document.addEventListener("keydown",e=>{
   if(dayOpen)closeDay();else exitFocus();
 });
 function renderNote(){document.getElementById("dayNote").value=S.dayNotes[todayISO()]||"";}
+/* ----- what to practise next: the paper furthest from its pass line, and a link for it -----
+   The link rotates by the day, so it isn't the same one every time. */
+function weakestSkill(){
+  let worst=null,worstRatio=Infinity;
+  Object.keys(SKILLS).forEach(sk=>{
+    const r=rawVal(sk)/SKILLS[sk].pass;
+    if(r<worstRatio){worstRatio=r;worst=sk;}
+  });
+  return worst;
+}
+function renderNextUp(){
+  const box=document.getElementById("nextUp"),sk=weakestSkill();
+  const picks=CURATED.filter(r=>r.skill===sk);
+  const pool=picks.length?picks:CURATED.filter(r=>r.skill==="all");
+  if(!pool.length){box.hidden=true;return;}
+  box.hidden=false;
+  const day=Math.floor(new Date(todayISO()).getTime()/86400000);
+  const r=pool[day%pool.length],c=SKILLS[sk];
+  box.innerHTML=`<div class="card-head">Suggested for today</div>
+    <p class="nu-why"><b>${c.label}</b> is furthest from the pass line — ${fmtMark(rawVal(sk))}/${c.max}, and ${fmtMark(Math.max(0,c.pass-rawVal(sk)))} off ${c.pass}. Twenty minutes here moves the card most.</p>
+    <a href="${esc(r.url)}" target="_blank" rel="noopener"><span class="nu-name">${esc(r.name)}</span><span class="nu-desc">${esc(r.desc)}</span><span class="nu-meta">${esc(r.meta)} ↗ · more in Practice</span></a>`;
+}
+
 /* ----- aim for the week ----- */
 function weekKey(d){const x=new Date(d||todayISO());x.setUTCDate(x.getUTCDate()-((x.getUTCDay()+6)%7));return x.toISOString().slice(0,10);}
 function renderAim(){
@@ -1406,7 +1448,7 @@ document.getElementById("showRestore").onclick=()=>{const r=document.getElementB
 document.getElementById("doRestore").onclick=()=>{try{const d=JSON.parse(document.getElementById("restoreBox").value);if(d&&typeof d==="object"){S=normalize(Object.assign(load(),d));save();renderAll();document.getElementById("copyMsg").textContent="Restored.";}}catch(e){document.getElementById("copyMsg").textContent="That doesn't look like valid backup data.";}};
 
 /* ----- init ----- */
-function renderAll(){renderCount();renderCard();renderAim();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderNoteLog();renderVocab();renderRes();}
+function renderAll(){renderCount();renderCard();renderNextUp();renderAim();renderGoals();renderLog();renderWeek();renderHeatmap();renderNote();renderNoteLog();renderVocab();renderRes();}
 paperOptions();tagOptions();
 if(S.settings.flashFrom&&FLASH_MODES[S.settings.flashFrom])document.getElementById("flashFrom").value=S.settings.flashFrom;
 document.getElementById("f_date").value=todayISO();
